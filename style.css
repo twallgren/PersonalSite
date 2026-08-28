@@ -1,0 +1,182 @@
+/* Taylor Wallgren — personal site.
+   Same visual system as Field Guide (fieldguide subdomain) so the two
+   read as one body of work: hard edges, heavy rules, mono for structure,
+   serif for prose. */
+
+:root {
+  --paper:      #f6f4f0;
+  --ink:        #1a1917;
+  --muted:      #6f6b64;
+  --hairline:   #d6d2ca;
+  --hairline-2: #c8c4bc;
+  --wash:       #ece8e1;
+
+  --pos:        #1f6497;
+  --neg:        #9c5f1a;
+
+  --ink-inv:    #f6f4f0;
+  --muted-inv:  #9c9891;
+  --body-inv:   #cfcac2;
+  --rule-inv:   #4a4741;
+
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+
+  --gutter: 80px;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  padding-bottom: 0;
+}
+
+a { color: var(--pos); text-decoration: none; border-bottom: 1px solid var(--pos); }
+a:hover { color: var(--neg); border-bottom-color: var(--neg); }
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+
+.wrap { padding-left: var(--gutter); padding-right: var(--gutter); }
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  border-bottom: 3px solid var(--ink);
+  padding-top: 28px; padding-bottom: 24px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 32px; flex-wrap: wrap;
+}
+.masthead__name {
+  font-size: 30px; font-weight: 700; letter-spacing: 0.15em;
+  text-transform: uppercase; line-height: 1;
+}
+.masthead__pronouns {
+  font-size: 12px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); margin-top: 8px;
+}
+.masthead__where {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); padding-bottom: 4px;
+}
+
+/* ---------- hero ---------- */
+
+.hero { padding-top: 72px; padding-bottom: 8px; }
+.hero__role {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 28px;
+}
+.hero__lead {
+  font-size: 42px; font-weight: 700; line-height: 1.14;
+  letter-spacing: -0.02em; max-width: 22ch; margin-bottom: 32px;
+  text-wrap: balance;
+}
+.hero__body {
+  font-family: var(--serif); font-size: 19px; line-height: 1.62;
+  max-width: 66ch; text-wrap: pretty;
+}
+.hero__body + .hero__body { margin-top: 18px; }
+
+/* ---------- sections ---------- */
+
+.section { padding-top: 80px; }
+.section__head {
+  border-top: 3px solid var(--ink); padding-top: 16px;
+  display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+.section__num { font-size: 12px; font-weight: 700; letter-spacing: 0.2em; }
+.section__label {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+}
+
+.claim {
+  font-size: 30px; font-weight: 700; line-height: 1.2;
+  letter-spacing: -0.01em; max-width: 26ch; margin-bottom: 36px;
+}
+
+/* ---------- work cards ---------- */
+
+.work { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.card {
+  border: 2px solid var(--ink); padding: 30px 28px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.card--current { background: var(--ink); color: var(--ink-inv); }
+.card__tag {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--muted);
+}
+.card--current .card__tag { color: var(--muted-inv); }
+.card__title { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; }
+.card__body { font-family: var(--serif); font-size: 17px; line-height: 1.6; }
+.card--current .card__body { color: var(--body-inv); }
+.card__facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 8px; }
+.chip {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid var(--hairline-2); color: var(--muted); padding: 5px 9px;
+}
+.card--current .chip { border-color: var(--rule-inv); color: var(--body-inv); }
+.card__link { margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.card--current .card__link a { color: #7fb4dd; border-bottom-color: #7fb4dd; }
+.card--current .card__link a:hover { color: #d9a86a; border-bottom-color: #d9a86a; }
+
+/* ---------- stack ---------- */
+
+.stack { border-top: 2px solid var(--ink); }
+.stack__row {
+  display: grid; grid-template-columns: 220px 1fr; gap: 32px;
+  padding: 22px 0; border-bottom: 1px solid var(--hairline); align-items: baseline;
+}
+.stack__k {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+.stack__v { font-size: 16px; font-weight: 500; line-height: 1.7; }
+.stack__v em { font-family: var(--serif); font-size: 16px; color: var(--muted); font-style: italic; }
+
+/* ---------- contact ---------- */
+
+.contact { background: var(--ink); color: var(--ink-inv); padding: 48px; margin-top: 80px; }
+.contact__kicker {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted-inv); margin-bottom: 20px;
+}
+.contact__line { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; max-width: 24ch; margin-bottom: 32px; }
+.contact__links { display: flex; flex-wrap: wrap; gap: 28px; }
+.contact__links a {
+  font-size: 15px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-inv); border-bottom-color: var(--rule-inv);
+}
+.contact__links a:hover { color: #d9a86a; border-bottom-color: #d9a86a; }
+.todo { color: var(--neg); font-weight: 700; }
+.card--current .todo, .contact .todo { color: #d9a86a; }
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1100px) {
+  :root { --gutter: 48px; }
+  .work { grid-template-columns: 1fr; }
+  .hero__lead { font-size: 36px; }
+}
+
+@media (max-width: 720px) {
+  :root { --gutter: 24px; }
+  .hero { padding-top: 48px; }
+  .hero__lead { font-size: 28px; max-width: none; }
+  .hero__body { font-size: 17px; }
+  .section { padding-top: 56px; }
+  .claim { font-size: 22px; max-width: none; }
+  .card { padding: 24px 22px; }
+  .card__title { font-size: 20px; }
+  .stack__row { grid-template-columns: 1fr; gap: 8px; }
+  .contact { padding: 28px 24px; margin-top: 56px; }
+  .contact__line { font-size: 22px; max-width: none; }
+  .contact__links { gap: 16px; }
+  .masthead__name { font-size: 22px; }
+}
