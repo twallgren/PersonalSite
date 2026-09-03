@@ -1,139 +1,176 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Taylor Wallgren — Senior Software Engineer</title>
-<meta name="description" content="Backend engineer who leans into complexity. 10+ years across .NET/C#, Elixir, and Kafka event-driven systems, with a standing interest in developer productivity as an engineering problem.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
-<link rel="stylesheet" href="style.css">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2V2VCKMHGG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-2V2VCKMHGG');
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taylor Wallgren — Senior Software Engineer</title>
+  <meta name="description"
+    content="Backend engineer who leans into complexity. 10+ years across .NET/C#, Elixir, and Kafka event-driven systems, with a standing interest in developer productivity as an engineering problem.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header class="masthead wrap">
-  <div>
-    <div class="masthead__name">Taylor Wallgren</div>
-    <div class="masthead__pronouns">He / Him</div>
-  </div>
-  <div class="masthead__where">West Jordan, Utah</div>
-</header>
+  <header class="masthead wrap">
+    <div>
+      <div class="masthead__name">Taylor Wallgren</div>
+      <div class="masthead__pronouns">He / Him</div>
+    </div>
+    <div class="masthead__where">West Jordan, Utah</div>
+  </header>
 
-<section class="hero wrap">
-  <div class="hero__role">Senior Software Engineer &middot; Backend Systems &middot; AI Tooling</div>
-  <h1 class="hero__lead">I lean into complexity.</h1>
-  <p class="hero__body">Whether it's a cross-service data corruption bug, a system I've never touched, or a process full of tedious manual steps — I trace it end to end, eliminate assumptions, and build something that makes the problem go away permanently.</p>
-  <p class="hero__body">Ten-plus years of backend engineering, primarily in .NET and C#, with production depth in Elixir and Kafka event-driven systems. I've worked across identity and auth platforms, distributed systems, and observability — but I'm a generalist at heart, and most effective wherever the hard problems are.</p>
-</section>
+  <section class="hero wrap">
+    <div class="hero__role">Senior Software Engineer &middot; Backend Systems &middot; AI Tooling</div>
+    <h1 class="hero__lead">I lean into complexity.</h1>
+    <p class="hero__body">Whether it's a cross-service data corruption bug, a system I've never touched, or a process
+      full of tedious manual steps — I trace it end to end, eliminate assumptions, and build something that makes the
+      problem go away permanently.</p>
+    <p class="hero__body">Ten-plus years of backend engineering, primarily in .NET and C#, with production depth in
+      Elixir and Kafka event-driven systems. I've worked across identity and auth platforms, distributed systems, and
+      observability — but I'm a generalist at heart, and most effective wherever the hard problems are.</p>
+  </section>
 
-<section class="section wrap">
-  <div class="section__head"><span class="section__num">01</span><h2 class="section__label">Work</h2></div>
+  <section class="section wrap">
+    <div class="section__head"><span class="section__num">01</span>
+      <h2 class="section__label">Work</h2>
+    </div>
 
-  <p class="claim">I treat developer productivity as an engineering problem.</p>
+    <p class="claim">I treat developer productivity as an engineering problem.</p>
 
-  <div class="work">
+    <div class="work">
 
-    <div class="card card--current">
-      <div class="card__tag">Current &middot; Independent</div>
-      <div class="card__title">Field Guide</div>
-      <div class="card__body">Scored evaluations of AI-engineering techniques. Every technique is measured on four signed axes against a stated baseline, carries an explicit confidence level, records the sources that disagree, and is allowed to conclude that it did not earn its place. Filtering is the scarce good, not discovery.</div>
-      <div class="card__facts">
-        <span class="chip">Evaluation rubric</span>
-        <span class="chip">Falsifiable scoring</span>
-        <span class="chip">Negative results kept</span>
+      <div class="card card--current">
+        <div class="card__tag">Current &middot; Independent</div>
+        <div class="card__title">Field Guide</div>
+        <div class="card__body">Scored evaluations of AI-engineering techniques. Every technique is measured on four
+          signed axes against a stated baseline, carries an explicit confidence level, records the sources that
+          disagree, and is allowed to conclude that it did not earn its place. Filtering is the scarce good, not
+          discovery.</div>
+        <div class="card__facts">
+          <span class="chip">Evaluation rubric</span>
+          <span class="chip">Falsifiable scoring</span>
+          <span class="chip">Negative results kept</span>
+        </div>
+        <div class="card__link"><a href="https://fieldguide.taylorwallgren.com">fieldguide.taylorwallgren.com</a></div>
       </div>
-      <div class="card__link"><a href="https://fieldguide.taylorwallgren.com">fieldguide.taylorwallgren.com</a></div>
-    </div>
 
-    <div class="card card--current">
-      <div class="card__tag">Current &middot; Independent</div>
-      <div class="card__title">Distributed AI cluster</div>
-      <div class="card__body">Three second-hand M1 Max MacBooks cabled into a Thunderbolt ring, pooling 192GB of unified memory to run a 235B-parameter model that fits on none of them. Getting there meant patching MLX twice &mdash; once to add pipeline support for the target architecture, once to remove the divisibility constraint from tensor parallelism entirely.</div>
-      <div class="card__facts">
-        <span class="chip">MLX</span>
-        <span class="chip">192GB pooled</span>
-        <span class="chip">Thunderbolt ring</span>
-        <span class="chip">Custom patches</span>
+      <div class="card card--current">
+        <div class="card__tag">Current &middot; Independent</div>
+        <div class="card__title">Distributed AI cluster</div>
+        <div class="card__body">Three second-hand M1 Max MacBooks cabled into a Thunderbolt ring, pooling 192GB of
+          unified memory to run a 235B-parameter model that fits on none of them. Getting there meant patching MLX twice
+          &mdash; once to add pipeline support for the target architecture, once to remove the divisibility constraint
+          from tensor parallelism entirely.</div>
+        <div class="card__facts">
+          <span class="chip">MLX</span>
+          <span class="chip">192GB pooled</span>
+          <span class="chip">Thunderbolt ring</span>
+          <span class="chip">Custom patches</span>
+        </div>
+        <div class="card__link"><a href="distributed-ai-cluster.html">Read the write-up</a></div>
       </div>
-      <div class="card__link"><a href="distributed-ai-cluster.html">Read the write-up</a></div>
+
+      <div class="card">
+        <div class="card__tag">Built at BILL &middot; Internal, published company-wide</div>
+        <div class="card__title">Self-maintaining AI knowledge system</div>
+        <div class="card__body">Forty-four domain skills, ten specialized agents, MCP integrations, and a daily
+          automated consolidation process that extracts learnings from session history and folds them back into the
+          knowledge base. Versioned, documented, and used across the company.</div>
+        <div class="card__facts">
+          <span class="chip">44 skills</span>
+          <span class="chip">10 agents</span>
+          <span class="chip">MCP</span>
+          <span class="chip">Self-updating</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__tag">Built at BILL &middot; Internal, published company-wide</div>
+        <div class="card__title">Shell automation library</div>
+        <div class="card__body">Four thousand-plus lines covering Kubernetes management, Kafka tooling, git safety
+          hooks, and Jira, Slack and GitLab automation — plus TamperMonkey enhancements for the internal tools nobody
+          else wanted to fix. Versioned, documented, and used across the company.</div>
+        <div class="card__facts">
+          <span class="chip">Kubernetes</span>
+          <span class="chip">Kafka</span>
+          <span class="chip">Git hooks</span>
+          <span class="chip">Jira / Slack / GitLab</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__tag">Earlier</div>
+        <div class="card__title">Support signal tooling</div>
+        <div class="card__body">A web service that classified and matched exceptions to make error triage tractable,
+          support-ticket grouping by cosine similarity, and keyword trending to decide what actually deserved
+          prioritising. Same instinct as everything above: make the recurring manual work stop recurring.</div>
+        <div class="card__facts">
+          <span class="chip">Exception classification</span>
+          <span class="chip">Similarity matching</span>
+          <span class="chip">Trend analysis</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="section__head"><span class="section__num">02</span>
+      <h2 class="section__label">Stack &amp; background</h2>
     </div>
 
-    <div class="card">
-      <div class="card__tag">Built at BILL &middot; Internal, published company-wide</div>
-      <div class="card__title">Self-maintaining AI knowledge system</div>
-      <div class="card__body">Forty-four domain skills, ten specialized agents, MCP integrations, and a daily automated consolidation process that extracts learnings from session history and folds them back into the knowledge base. Versioned, documented, and used across the company.</div>
-      <div class="card__facts">
-        <span class="chip">44 skills</span>
-        <span class="chip">10 agents</span>
-        <span class="chip">MCP</span>
-        <span class="chip">Self-updating</span>
+    <div class="stack">
+      <div class="stack__row">
+        <div class="stack__k">Primary</div>
+        <div class="stack__v">.NET / C# &mdash; <em>ten-plus years, the language I think in</em></div>
+      </div>
+      <div class="stack__row">
+        <div class="stack__k">Current production</div>
+        <div class="stack__v">Elixir &middot; Kafka &middot; event-driven systems</div>
+      </div>
+      <div class="stack__row">
+        <div class="stack__k">Also</div>
+        <div class="stack__v">Java &middot; SQL &middot; Kubernetes &middot; shell</div>
+      </div>
+      <div class="stack__row">
+        <div class="stack__k">Domains</div>
+        <div class="stack__v">Identity &amp; auth platforms &middot; distributed systems &middot; observability &amp;
+          system monitoring</div>
+      </div>
+      <div class="stack__row">
+        <div class="stack__k">Education</div>
+        <div class="stack__v">B.S. Computer Software Engineering, Weber State University &mdash; <em>summa cum laude,
+            3.92</em></div>
       </div>
     </div>
+  </section>
 
-    <div class="card">
-      <div class="card__tag">Built at BILL &middot; Internal, published company-wide</div>
-      <div class="card__title">Shell automation library</div>
-      <div class="card__body">Four thousand-plus lines covering Kubernetes management, Kafka tooling, git safety hooks, and Jira, Slack and GitLab automation — plus TamperMonkey enhancements for the internal tools nobody else wanted to fix. Versioned, documented, and used across the company.</div>
-      <div class="card__facts">
-        <span class="chip">Kubernetes</span>
-        <span class="chip">Kafka</span>
-        <span class="chip">Git hooks</span>
-        <span class="chip">Jira / Slack / GitLab</span>
+  <section class="wrap">
+    <div class="contact">
+      <div class="contact__kicker">Get in touch</div>
+      <div class="contact__line">If you have a problem nobody wants to trace, I'm interested. Reach me on LinkedIn.
+      </div>
+      <div class="contact__links">
+        <a href="https://www.linkedin.com/in/taylorwallgren/">LinkedIn</a>
+        <a href="https://github.com/twallgren">GitHub</a>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card__tag">Earlier</div>
-      <div class="card__title">Support signal tooling</div>
-      <div class="card__body">A web service that classified and matched exceptions to make error triage tractable, support-ticket grouping by cosine similarity, and keyword trending to decide what actually deserved prioritising. Same instinct as everything above: make the recurring manual work stop recurring.</div>
-      <div class="card__facts">
-        <span class="chip">Exception classification</span>
-        <span class="chip">Similarity matching</span>
-        <span class="chip">Trend analysis</span>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<section class="section wrap">
-  <div class="section__head"><span class="section__num">02</span><h2 class="section__label">Stack &amp; background</h2></div>
-
-  <div class="stack">
-    <div class="stack__row">
-      <div class="stack__k">Primary</div>
-      <div class="stack__v">.NET / C# &mdash; <em>ten-plus years, the language I think in</em></div>
-    </div>
-    <div class="stack__row">
-      <div class="stack__k">Current production</div>
-      <div class="stack__v">Elixir &middot; Kafka &middot; event-driven systems</div>
-    </div>
-    <div class="stack__row">
-      <div class="stack__k">Also</div>
-      <div class="stack__v">Java &middot; SQL &middot; Kubernetes &middot; shell</div>
-    </div>
-    <div class="stack__row">
-      <div class="stack__k">Domains</div>
-      <div class="stack__v">Identity &amp; auth platforms &middot; distributed systems &middot; observability &amp; system monitoring</div>
-    </div>
-    <div class="stack__row">
-      <div class="stack__k">Education</div>
-      <div class="stack__v">B.S. Computer Software Engineering, Weber State University &mdash; <em>summa cum laude, 3.92</em></div>
-    </div>
-  </div>
-</section>
-
-<section class="wrap">
-  <div class="contact">
-    <div class="contact__kicker">Get in touch</div>
-    <div class="contact__line">If you have a problem nobody wants to trace, I'm interested. Reach me on LinkedIn.</div>
-    <div class="contact__links">
-      <a href="https://www.linkedin.com/in/taylorwallgren/">LinkedIn</a>
-      <a href="https://github.com/twallgren">GitHub</a>
-    </div>
-  </div>
-</section>
+  </section>
 
 </body>
+
 </html>

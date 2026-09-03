@@ -1,575 +1,932 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Running a 235B model across three MacBooks — Taylor Wallgren</title>
-<meta name="description" content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, two custom patches to MLX, and the networking bug that surfaced as a GPU error.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
-<link rel="stylesheet" href="style.css">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2V2VCKMHGG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-2V2VCKMHGG');
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Running a 235B model across three MacBooks — Taylor Wallgren</title>
+  <meta name="description"
+    content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, two custom patches to MLX, and the networking bug that surfaced as a GPU error.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header class="masthead masthead--compact wrap">
-  <a class="masthead__name" href="index.html">Taylor Wallgren</a>
-  <nav class="nav">
-    <a href="index.html">Home</a>
-    <a href="https://fieldguide.taylorwallgren.com">Field Guide</a>
-  </nav>
-</header>
+  <header class="masthead masthead--compact wrap">
+    <a class="masthead__name" href="index.html">Taylor Wallgren</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="https://fieldguide.taylorwallgren.com">Field Guide</a>
+    </nav>
+  </header>
 
-<article>
+  <article>
 
-<div class="post-head wrap">
-  <div class="post-kicker">
-    <div class="post-kicker__bar"><i></i><i></i><i></i></div>
-    <div class="post-kicker__status">Complete &middot; Running</div>
-    <div class="post-kicker__sep"></div>
-    <div class="post-kicker__meta">Last updated <time datetime="2026-09-02">2 Sep 2026</time></div>
-  </div>
-
-  <div class="post-grid">
-    <div>
-      <h1 class="post-title">Running a 235B model across three MacBooks</h1>
-      <p class="standfirst">Three second-hand M1 Max MacBook Pros, cabled into a Thunderbolt ring, pooling 192GB of unified memory to run a model that fits on none of them. It works &mdash; but only after patching MLX twice, and after two confident conclusions turned out to be wrong.</p>
-    </div>
-    <aside class="stats">
-      <div class="stat">
-        <div class="stat__num">3</div>
-        <div class="stat__label">M1 Max nodes</div>
+    <div class="post-head wrap">
+      <div class="post-kicker">
+        <div class="post-kicker__bar"><i></i><i></i><i></i></div>
+        <div class="post-kicker__status">Complete &middot; Running</div>
+        <div class="post-kicker__sep"></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-09-02">2 Sep 2026</time></div>
       </div>
-      <div class="stat">
-        <div class="stat__num">192GB</div>
-        <div class="stat__label">Pooled unified memory</div>
-      </div>
-      <div class="stat">
-        <div class="stat__num">235B</div>
-        <div class="stat__label">Parameters, 4-bit</div>
-      </div>
-      <div class="stat">
-        <div class="stat__num">123GB</div>
-        <div class="stat__label">Model on disk</div>
-      </div>
-    </aside>
-  </div>
-</div>
 
-<!-- ============ 01 START HERE ============ -->
-
-<div class="section wrap" style="padding-top: 64px;">
-  <div class="section__head"><span class="section__num">01</span><h2 class="section__label">Start here &mdash; if you are going to try this</h2></div>
-
-  <div class="baseline">
-    <div class="baseline__label">The one thing</div>
-    <div class="baseline__text">The rule that says your model will not fit on three machines is an assumption in Python, not a property of the hardware. It is about 400 lines to remove. Do not let it pick your node count for you.</div>
-  </div>
-
-  <p class="prose" style="margin-top: 32px;">Everything below is the long version. If you are costing out a build right now, this section is the part that will save you time. It is ordered roughly by how expensive the mistake is to undo &mdash; the things you cannot patch your way out of first.</p>
-
-  <div class="guide">
-
-    <div class="guide__item">
-      <div class="guide__cat">Node count</div>
-      <div>
-        <div class="guide__rule">Three nodes is fine. Budget the patching effort, not a fourth machine.</div>
-        <p class="guide__body">Out of the box, three is an awkward number: tensor parallelism demands that head counts divide evenly by the node count, and grouped-query attention has pushed key-value head counts down to 8 and 4, which never divide by three. Four nodes sidesteps all of it with no code. That is the standard advice, and it is why I nearly bought a fourth machine.</p>
-        <p class="guide__body" style="margin-top: 14px;">It turned out to be unnecessary. Both limits are software assumptions, and both are removable &mdash; pipeline support is about fifteen to twenty lines per architecture, and the divisibility requirement in tensor parallelism came out in one patch that applies to every architecture at once. A missing strategy or a dimension that will not divide is <em>effort</em>, not an exclusion. Price the fourth node against a weekend of reading MLX's source, and decide on that basis rather than assuming the constraint is fixed.</p>
+      <div class="post-grid">
+        <div>
+          <h1 class="post-title">Running a 235B model across three MacBooks</h1>
+          <p class="standfirst">Three second-hand M1 Max MacBook Pros, cabled into a Thunderbolt ring, pooling 192GB of
+            unified memory to run a model that fits on none of them. It works &mdash; but only after patching MLX twice,
+            and after two confident conclusions turned out to be wrong.</p>
+        </div>
+        <aside class="stats">
+          <div class="stat">
+            <div class="stat__num">3</div>
+            <div class="stat__label">M1 Max nodes</div>
+          </div>
+          <div class="stat">
+            <div class="stat__num">192GB</div>
+            <div class="stat__label">Pooled unified memory</div>
+          </div>
+          <div class="stat">
+            <div class="stat__num">235B</div>
+            <div class="stat__label">Parameters, 4-bit</div>
+          </div>
+          <div class="stat">
+            <div class="stat__num">123GB</div>
+            <div class="stat__label">Model on disk</div>
+          </div>
+        </aside>
       </div>
     </div>
 
-    <div class="guide__item">
-      <div class="guide__cat">Hardware</div>
-      <div>
-        <div class="guide__rule">Prefer desktop Macs to laptops.</div>
-        <p class="guide__body">A Mac mini or Studio restarts itself after a power cut. A MacBook that fully drains its battery does not &mdash; it needs a physical press of the power button, and no software setting changes that. Mine drained to zero <em>while plugged in</em>, because sustained full-compute draw can exceed what the charger supplies. Related: FileVault and Automatic Login are mutually exclusive on macOS, because FileVault's pre-boot prompt happens before the OS can read the auto-login preference. So an unattended reboot either leaves the machine encrypted-and-stuck or unencrypted-and-recoverable. Pick deliberately.</p>
+    <!-- ============ 01 START HERE ============ -->
+
+    <div class="section wrap" style="padding-top: 64px;">
+      <div class="section__head"><span class="section__num">01</span>
+        <h2 class="section__label">Start here &mdash; if you are going to try this</h2>
+      </div>
+
+      <div class="baseline">
+        <div class="baseline__label">The one thing</div>
+        <div class="baseline__text">The rule that says your model will not fit on three machines is an assumption in
+          Python, not a property of the hardware. It is about 400 lines to remove. Do not let it pick your node count
+          for you.</div>
+      </div>
+
+      <p class="prose" style="margin-top: 32px;">Everything below is the long version. If you are costing out a build
+        right now, this section is the part that will save you time. It is ordered roughly by how expensive the mistake
+        is to undo &mdash; the things you cannot patch your way out of first.</p>
+
+      <div class="guide">
+
+        <div class="guide__item">
+          <div class="guide__cat">Node count</div>
+          <div>
+            <div class="guide__rule">Three nodes is fine. Budget the patching effort, not a fourth machine.</div>
+            <p class="guide__body">Out of the box, three is an awkward number: tensor parallelism demands that head
+              counts divide evenly by the node count, and grouped-query attention has pushed key-value head counts down
+              to 8 and 4, which never divide by three. Four nodes sidesteps all of it with no code. That is the standard
+              advice, and it is why I nearly bought a fourth machine.</p>
+            <p class="guide__body" style="margin-top: 14px;">It turned out to be unnecessary. Both limits are software
+              assumptions, and both are removable &mdash; pipeline support is about fifteen to twenty lines per
+              architecture, and the divisibility requirement in tensor parallelism came out in one patch that applies to
+              every architecture at once. A missing strategy or a dimension that will not divide is <em>effort</em>, not
+              an exclusion. Price the fourth node against a weekend of reading MLX's source, and decide on that basis
+              rather than assuming the constraint is fixed.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Hardware</div>
+          <div>
+            <div class="guide__rule">Prefer desktop Macs to laptops.</div>
+            <p class="guide__body">A Mac mini or Studio restarts itself after a power cut. A MacBook that fully drains
+              its battery does not &mdash; it needs a physical press of the power button, and no software setting
+              changes that. Mine drained to zero <em>while plugged in</em>, because sustained full-compute draw can
+              exceed what the charger supplies. Related: FileVault and Automatic Login are mutually exclusive on macOS,
+              because FileVault's pre-boot prompt happens before the OS can read the auto-login preference. So an
+              unattended reboot either leaves the machine encrypted-and-stuck or unencrypted-and-recoverable. Pick
+              deliberately.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Interconnect</div>
+          <div>
+            <div class="guide__rule">On Thunderbolt 4 there is no RDMA fast path.</div>
+            <p class="guide__body">MLX's fully-connected JACCL backend needs Thunderbolt 5. On TB4 hardware you get the
+              TCP ring backend, which means every generated token makes a full round trip through all the ranks. Direct
+              Thunderbolt cabling still beats 10GbE and costs nothing extra, so cable a physical ring. The ring is safe
+              from bridging loops as long as you let <span class="tok">mlx.distributed_config --auto-setup</span>
+              configure it &mdash; it disables macOS's merged Thunderbolt Bridge and gives each cable its own isolated
+              point-to-point link.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Model choice</div>
+          <div>
+            <div class="guide__rule">Check the model's numbers before downloading 123GB.</div>
+            <p class="guide__body">Three gates, all of which must pass: the architecture has to implement the strategy
+              at all; head counts must divide by the node count; and for quantized models, every sharded dimension
+              divided by the node count must <em>still</em> be divisible by the quantization group size, normally 64.
+              Skipping the third gate costs you a full download and load cycle before the error appears. The numbers are
+              all in the model's <span class="tok">config.json</span> &mdash; it is a two-minute check.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Permissions</div>
+          <div>
+            <div class="guide__rule">Grant Local Network access to your actual Python binary first.</div>
+            <p class="guide__body">macOS silently blocks same-subnet connections from non-Apple-signed binaries.
+              Homebrew Python is one; <span class="tok">ping</span>, <span class="tok">nc</span> and system Python are
+              exempt. So every connectivity check you run will pass while the thing that matters fails, and the error
+              you get is a generic connection failure with no mention of permissions. The prompt cannot appear over SSH,
+              so trigger it locally at each machine before you start.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Model transfer</div>
+          <div>
+            <div class="guide__rule">Download once, then copy over the Thunderbolt addresses explicitly.</div>
+            <p class="guide__body">Each node needs the full model &mdash; sharding happens at load time, not download
+              time. Three simultaneous downloads just split one home connection three ways. Download on one node, then
+              <span class="tok">rsync</span> to the others across the Thunderbolt links, which run in parallel because
+              they are separate cables. Use the point-to-point IPs, not hostnames: a bare hostname resolves through
+              Tailscale and transfers at roughly a two-thousandth of the speed with no error, no warning, and no obvious
+              symptom beyond seeming slow. This caught me twice in one session.
+            </p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">After every reboot</div>
+          <div>
+            <div class="guide__rule">Re-detect the Thunderbolt interfaces. Never reapply saved notes.</div>
+            <p class="guide__body">A reboot wipes the runtime network configuration <em>and</em> macOS renumbers the
+              interfaces &mdash; what was <span class="tok">en2</span> becomes <span class="tok">en3</span>, and the
+              addresses move with it. Reapplying a previously-recorded mapping puts a rank's address on the wrong
+              physical interface, which is a uniquely nasty failure: the cluster initialises fine and all collective
+              operations pass, so it looks healthy. Only point-to-point send and receive hangs. That is exactly what
+              pipeline parallelism uses.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Serving defaults</div>
+          <div>
+            <div class="guide__rule">Raise <span class="tok">--max-tokens</span> before you use it for anything real.
+            </div>
+            <p class="guide__body">The server defaults to <span class="tok">512</span> tokens per completion. That is
+              fine for a chat reply and silently wrong for everything else &mdash; a coding task stops mid-function, a
+              long document stops mid-paragraph, an agent loop stops mid-plan. There is no error; the response just ends
+              and the finish reason says it hit the limit, which is easy to miss when you are reading the text rather
+              than the envelope. I default mine to <span class="tok">8192</span>.</p>
+            <p class="guide__body" style="margin-top: 14px;">Two more worth setting deliberately on a cluster this full.
+              <span class="tok">--prompt-cache-size</span> defaults to holding ten distinct KV caches in memory, which
+              is generous when your spare headroom is single-digit gigabytes per node &mdash; I lowered it to five. And
+              a reasoning model's hidden thinking tokens cannot be turned off by asking it politely in the prompt; that
+              takes <span class="tok">--chat-template-args '{&quot;enable_thinking&quot;:false}'</span> at launch, using
+              the <span class="tok">enable_thinking</span> convention that the Qwen3 and GLM 4.x chat templates share.
+              Asking in the prompt was the first thing I tried, and it did nothing.
+            </p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Library version</div>
+          <div>
+            <div class="guide__rule">Check whether upstream already fixed it before you debug it.</div>
+            <p class="guide__body">A <span class="tok">pip install</span> gives you the latest <em>tagged</em> release,
+              and on a library moving this fast that can be months behind the branch. My cluster runs 0.31.3, tagged in
+              April. A bug I spent an evening on had been fixed upstream in August &mdash; and that fix is still in no
+              tagged release at all, so no amount of upgrading through normal channels would have delivered it.</p>
+            <p class="guide__body" style="margin-top: 14px;">So search the commit log on <span class="tok">main</span>
+              first, not last. And if you are carrying local patches, stop editing files inside <span
+                class="tok">site-packages</span> &mdash; that is what forces the choice between your changes and
+              upstream's fixes. Fork the repo, put your patches on a branch off <span class="tok">main</span> as
+              ordinary commits, and install that branch editable. Upgrading becomes a merge you can read, your patches
+              survive it, and you inherit everything upstream has fixed since the last tag. That is what I should have
+              done at the start.</p>
+            <p class="guide__body" style="margin-top: 14px;">It works cleanly for a pure-Python package. For a compiled
+              one, where building from source is a much heavier commitment, a patched file under <span
+                class="tok">site-packages</span> may still be the pragmatic answer &mdash; but then it is the one you
+              have to remember to re-apply, so write down where it lives.</p>
+            <p class="guide__body" style="margin-top: 14px;">The migration to that arrangement proved the point on the
+              way through. The <span class="tok">pip uninstall</span> that preceded it deleted one of the patches
+              outright, because that patch existed only as an edited file and nothing else knew it was there &mdash;
+              recovered by luck, from a copy an earlier session had left in a temporary directory. So when you make the
+              move, inventory from the filesystem rather than from your notes: run <span class="tok">find</span> over
+              the installed package for <span class="tok">.bak</span> files and count them. A patch that is not a commit
+              somewhere is one uninstall away from gone, and you will find out at the worst moment.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Verification</div>
+          <div>
+            <div class="guide__rule">Use <span class="tok">top</span> for memory, not <span class="tok">ps</span>.</div>
+            <p class="guide__body">On Apple silicon the RSS column badly undercounts MLX's Metal-backed allocations. It
+              reported 1.6GB per node for a 38GB model, which reads as a catastrophic failure. <span class="tok">top
+                -pid &lt;pid&gt; -l 1 -stats pid,mem</span> gave the real figures. Since per-node memory is how you
+              prove a model genuinely split rather than silently replicated, using the wrong tool here means you cannot
+              tell success from failure.</p>
+          </div>
+        </div>
+
+        <div class="guide__item">
+          <div class="guide__cat">Expectations</div>
+          <div>
+            <div class="guide__rule">This buys capacity, not speed.</div>
+            <p class="guide__body">A cluster like this lets you run models that fit on no single machine you own. It
+              does not make them fast. Measured across the same sweep, throughput falls from about 62 tokens per second
+              on the small models to 21 at 106B and 8 at the top end &mdash; while a 42GB model that fits on
+              <em>one</em> node runs at 36 without any of this machinery. If everything you care about fits on one box,
+              buy the bigger box. This is worth doing only for the models that do not fit, and what you get is
+              capability, not speed.
+            </p>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="guide__item">
-      <div class="guide__cat">Interconnect</div>
-      <div>
-        <div class="guide__rule">On Thunderbolt 4 there is no RDMA fast path.</div>
-        <p class="guide__body">MLX's fully-connected JACCL backend needs Thunderbolt 5. On TB4 hardware you get the TCP ring backend, which means every generated token makes a full round trip through all the ranks. Direct Thunderbolt cabling still beats 10GbE and costs nothing extra, so cable a physical ring. The ring is safe from bridging loops as long as you let <span class="tok">mlx.distributed_config --auto-setup</span> configure it &mdash; it disables macOS's merged Thunderbolt Bridge and gives each cable its own isolated point-to-point link.</p>
+    <!-- ============ 02 THE GOAL ============ -->
+
+    <div class="section wrap">
+      <div class="section__head"><span class="section__num">02</span>
+        <h2 class="section__label">The goal</h2>
+      </div>
+
+      <p class="prose">One model, sharded across three machines. Not three independent model servers behind a load
+        balancer &mdash; a single set of weights split into thirds, with every token passing through all three nodes.
+        The three Macs are <span class="tok">ai-1</span>, <span class="tok">ai-2</span> and <span
+          class="tok">ai-3</span>: 2021 M1 Max MacBook Pros, 64GB of unified memory each, bought second-hand.
+        Individually they run a 30B model comfortably. Pooled, they have 192GB, which is enough for a 235B-parameter
+        model at 4-bit quantization.</p>
+
+      <p class="prose">The target was <span class="tok">Qwen3-235B-A22B-Instruct-2507-4bit</span> &mdash; 123GB on disk,
+        leaving headroom for the key-value cache. <span class="tok">ai-1</span> acts as the controller and the private
+        API endpoint; the other two are compute workers. Admin access runs over Wi-Fi and Tailscale; the model
+        interconnect runs over direct Thunderbolt cabling and nothing else.</p>
+
+      <div class="when" style="margin-top: 40px;">
+        <div class="when__col">
+          <div class="when__kicker when__kicker--pos">What the hardware gives you</div>
+          <div class="when__title">Memory you cannot otherwise buy</div>
+          <div class="when__body">192GB of unified memory across three second-hand laptops costs a fraction of a single
+            machine with that much, and every node's GPU participates. For models too large to fit anywhere else you
+            own, this is the whole point.</div>
+        </div>
+        <div class="when__col">
+          <div class="when__kicker when__kicker--neg">What it does not</div>
+          <div class="when__title">Thunderbolt 4, so no RDMA</div>
+          <div class="when__body">MLX's JACCL fast path needs Thunderbolt 5 and a direct cable between every pair. The
+            M1 Max has TB4, so the only option is the TCP ring backend &mdash; a full round trip through every rank, per
+            token, forever.</div>
+        </div>
+      </div>
+
+      <p class="prose" style="margin-top: 36px;">That constraint is worth sitting with, because it sets the ceiling on
+        everything that follows. The ring backend is a <em>logical</em> communication algorithm, not a physical cabling
+        requirement &mdash; it runs over any IP-reachable network. But it is TCP, it has no remote direct memory access,
+        and each token is a sequential trip around the ring. No amount of configuration removes that.</p>
+    </div>
+
+    <!-- ============ 03 THE PLAN ============ -->
+
+    <div class="section wrap">
+      <div class="section__head"><span class="section__num">03</span>
+        <h2 class="section__label">The plan</h2>
+      </div>
+
+      <p class="prose">Cable all three machines into a physical ring &mdash; <span class="tok">ai-1</span> to <span
+          class="tok">ai-2</span>, <span class="tok">ai-2</span> to <span class="tok">ai-3</span>, <span
+          class="tok">ai-3</span> back to <span class="tok">ai-1</span> &mdash; so every leg of the ring backend's
+        nearest-neighbour communication has a real one-hop link with no relaying. Closing a loop like that would
+        normally risk a broadcast storm, since macOS's Thunderbolt Bridge has no spanning-tree protection. It is safe
+        here only because the setup tool explicitly tears the bridge down and replaces it with isolated point-to-point
+        links, one per cable, each on its own tiny subnet.</p>
+
+      <div class="meta-row">
+        <div class="meta"><span class="meta__k">ai-1</span><span class="meta__v">rank 0</span><span
+            class="meta__x">controller &middot; API endpoint</span></div>
+        <div class="meta"><span class="meta__k">ai-2</span><span class="meta__v">rank 1</span><span
+            class="meta__x">worker</span></div>
+        <div class="meta"><span class="meta__k">ai-3</span><span class="meta__v">rank 2</span><span
+            class="meta__x">worker</span></div>
+      </div>
+
+      <p class="prose" style="margin-top: 36px;">Everything else was scripted from my laptop, so that a node could be
+        rebuilt from scratch without touching it physically: SSH key distribution, disabling sleep, matching Python
+        environments at identical paths on all three, pushing a Hugging Face token, and configuring the Thunderbolt
+        network. The API binds only to loopback on the controller and is reached through an SSH tunnel &mdash; nothing
+        about this is exposed to the network.</p>
+
+      <p class="code__label">Launching the cluster</p>
+      <div class="code">mlx.launch --backend ring --hostfile cluster.json --env MLX_METAL_FAST_SYNCH=1 -- \
+        python -m mlx_lm.server \
+        --model mlx-community/Qwen3-235B-A22B-Instruct-2507-4bit \
+        --pipeline --host 127.0.0.1 --port 8080</div>
+
+      <p class="prose" style="margin-top: 28px;">That is the finished command. Getting to the point where it ran took
+        considerably longer than writing it.</p>
+    </div>
+
+    <!-- ============ 04 WHAT BROKE ============ -->
+
+    <div class="section wrap">
+      <div class="section__head section__head--spread">
+        <div style="display: flex; align-items: baseline; gap: 20px;">
+          <span class="section__num">04</span>
+          <h2 class="section__label">What broke</h2>
+        </div>
+        <div class="section__note">In roughly the order it happened</div>
+      </div>
+
+      <p class="prose">Almost none of these were interesting distributed-systems problems. They were operating-system
+        behaviour, shell trivia, and one dead cable. That is worth saying plainly, because the hard part of this project
+        was not the parallelism &mdash; it was everything underneath it.</p>
+
+      <div class="history" style="margin-top: 36px;">
+
+        <div class="history__entry">
+          <div class="history__date">Shell</div>
+          <div>
+            <div class="history__what"><span class="tok">USERNAME</span> is a reserved variable in zsh</div>
+            <p class="history__why">Assigning to it does nothing at all &mdash; zsh treats it as a special parameter
+              tied to the real system user. A provisioning script that stored the SSH username there silently ignored
+              every <span class="tok">--user</span> override and used the login name instead. No error, no warning.
+              Renaming the variable fixed it.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">SSH</div>
+          <div>
+            <div class="history__what">The controller needs passwordless SSH to itself</div>
+            <p class="history__why">MLX's launcher treats the controller as just another host in the list and connects
+              to it the same way it connects to the workers. The key-distribution script only pushed keys outward, so
+              the controller could reach both workers but not itself. Host-key fingerprints need accepting per
+              <em>address</em>, too &mdash; the Thunderbolt IPs are separate entries from the hostnames, and a
+              non-interactive script fails rather than prompting.
+            </p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Networking</div>
+          <div>
+            <div class="history__what">Local hostname resolution stops working across networks</div>
+            <p class="history__why">The <span class="tok">.local</span> multicast DNS names do not cross network
+              segments. Switching my laptop to a different Wi-Fi network for an unrelated reason made all three nodes
+              unreachable, in a way that looked exactly like the cluster being down. Tailscale hostnames work regardless
+              of which network the client is on, so admin access moved there permanently.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Power</div>
+          <div>
+            <div class="history__what">Idle machines slept and vanished</div>
+            <p class="history__why">An entire-cluster &ldquo;everything times out at once&rdquo; episode early on turned
+              out to be three laptops going to sleep. <span class="tok">pmset -a disablesleep 1</span> on each node,
+              applied during provisioning. Later, one node drained its battery to zero while plugged in and
+              hard-stopped, which is when I learned that a drained MacBook needs a physical power-button press to come
+              back.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Permissions</div>
+          <div>
+            <div class="history__what">The ring would not connect, and the network was fine</div>
+            <p class="history__why">Cluster initialisation failed with a connection error on specific node pairs while
+              others worked. Ping was clean. A raw TCP connection to the same address and port succeeded instantly. The
+              firewall was off. It looked like an upstream bug, and it matched an open issue in MLX's tracker almost
+              exactly.</p>
+            <p class="history__why">It was not. Two mundane local causes, both requiring physical access. First: macOS
+              Local Network Privacy was silently blocking the Homebrew Python binary from making same-subnet
+              connections. Apple-signed binaries are exempt &mdash; which is precisely why every diagnostic I had run
+              passed. A controlled test settled it: alternating connection attempts to the same peer in the same second,
+              system Python succeeded eight times out of eight, Homebrew Python zero out of eight. Second: one of the
+              three Thunderbolt cables was dead, showing inactive on both ends.</p>
+            <p class="history__note">The transferable lesson: when you are checking whether a specific process can reach
+              the network, test with <em>that process</em>. A proxy tool can be exempt from permissions the real one is
+              not.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Transfer</div>
+          <div>
+            <div class="history__what">Model copies silently took the slow path</div>
+            <p class="history__why">Copying the model between nodes using bare hostnames routed the transfer over
+              Tailscale instead of the direct Thunderbolt link: roughly 170KB/s against the 340MB/s the cable actually
+              delivers, with no error and no indication anything was wrong beyond appearing slow. It happened twice in
+              one session, so I wrote a script that derives the correct point-to-point address by matching subnets on
+              both ends rather than trusting any cached mapping.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Measurement</div>
+          <div>
+            <div class="history__what"><span class="tok">ps</span> undercounts MLX memory badly</div>
+            <p class="history__why">Verifying that a model had genuinely split across nodes meant checking per-node
+              memory. The RSS column showed about 1.6GB per node for a 38GB model &mdash; alarming, and completely
+              wrong. Metal-backed unified-memory allocations are not fully attributed to a process's RSS. Measuring with
+              <span class="tok">top</span> instead gave 14 / 14 / 13GB, which matched the model. The whole verification
+              depended on picking the right tool.
+            </p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Tool calling</div>
+          <div>
+            <div class="history__what">One trailing newline broke every tool call</div>
+            <p class="history__why">Pointing a coding agent at the cluster, every tool call came back as <span
+                class="tok">Model tried to call unavailable tool 'bash\n'</span> &mdash; with the tool named <span
+                class="tok">bash</span> plainly present in the list of available tools. Two candidates: the server was
+              emitting a dirty name, or the client was mangling the streamed response. They have completely different
+              fixes, so the first move was the cheapest test that separates them &mdash; call the endpoint directly and
+              print the raw <span class="tok">repr</span> of the function name, rather than reading the rendered text.
+            </p>
+            <p class="history__why">The server was returning <span class="tok">'bash\n'</span>. GLM emits tool calls
+              with the function name on its own line before the arguments, and the parser captured it with a regex in
+              <span class="tok">DOTALL</span> mode that swallowed the newline. The argument keys and values two lines
+              below were already being stripped; only the name was missed.
+            </p>
+            <p class="history__why">The part worth remembering is the second bug hiding behind the first. That dirty
+              name gets matched against the tool schema to decide which arguments are strings. <span
+                class="tok">'bash\n'</span> matches nothing, so every declared string argument was handed to a
+              deserializer instead &mdash; meaning a string that happened to look like a number would have been silently
+              coerced to the wrong type. The visible failure was a missing tool. The invisible one was type corruption
+              in the arguments, and it would have surfaced much later as something far stranger.</p>
+            <p class="history__note">Upstream had fixed this a fortnight earlier, in a commit that has still not reached
+              a tagged release. I found that out after writing my own identical one-line fix. Searching the upstream log
+              first would have cost two minutes.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Download</div>
+          <div>
+            <div class="history__what">A finished download that still looked incomplete</div>
+            <p class="history__why">The 123GB download reported success and exited cleanly, but seven zero-byte <span
+                class="tok">.incomplete</span> placeholder files remained in the cache. They were orphans from an
+              earlier retried attempt &mdash; the real, complete files sat alongside them under the same hashes. The way
+              to tell the difference is not to count placeholder files but to check whether any symlink in the snapshot
+              fails to resolve. None did.</p>
+          </div>
+        </div>
+
+        <div class="history__entry">
+          <div class="history__date">Migration</div>
+          <div>
+            <div class="history__what">The cleanup that nearly destroyed the work</div>
+            <p class="history__why">Moving off hand-edited files and onto the fork branch was the right fix, and it was
+              the closest this project came to losing something irreplaceable. The plan was correct: extract each local
+              patch as a diff, then uninstall the package and reinstall from git. I extracted the patches my notes
+              listed. There was a fourth one, written in a different session and written up in a different document, and
+              I had not read that document yet.</p>
+            <p class="history__why"><span class="tok">pip uninstall</span> removed the live file on all three nodes at
+              once. Only the pre-patch backup survived, which is precisely the version without the work in it. Then
+              every recovery route came up empty in turn: no compiled bytecode left behind, no Time Machine local
+              snapshots on any node, nothing in the client-side clone but vanilla upstream, no branch or pull request
+              anywhere holding it, and the per-node home-directory git repos exclude the virtual environment &mdash;
+              deliberately, since the first commit.</p>
+            <p class="history__why">What saved it was a stale scratchpad directory under <span
+                class="tok">/private/tmp</span>, left behind months earlier by the session that first wrote the patch. A
+              full copy was still sitting there. Two independent reconstructions of the file then agreed byte for byte,
+              which is the only reason it could be trusted rather than merely hoped over; it is now a real commit,
+              re-verified end to end against the same 72B model as the original.</p>
+            <p class="history__note">Two things generalise. Prose describing a patch is not the patch &mdash; that file
+              was thoroughly documented and the documentation could not restore a line of it. And do not trust your
+              notes to enumerate your own hand-edits: run <span class="tok">find</span> over the installed package for
+              backup files and let the filesystem tell you how many patches you actually have, because a cluster
+              accumulates them from sessions you have forgotten.</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="guide__item">
-      <div class="guide__cat">Model choice</div>
-      <div>
-        <div class="guide__rule">Check the model's numbers before downloading 123GB.</div>
-        <p class="guide__body">Three gates, all of which must pass: the architecture has to implement the strategy at all; head counts must divide by the node count; and for quantized models, every sharded dimension divided by the node count must <em>still</em> be divisible by the quantization group size, normally 64. Skipping the third gate costs you a full download and load cycle before the error appears. The numbers are all in the model's <span class="tok">config.json</span> &mdash; it is a two-minute check.</p>
+    <!-- ============ 05 WRONG TURNS ============ -->
+
+    <div class="section wrap">
+      <div class="plog">
+        <div class="plog__head">
+          <h2 class="plog__title">Two conclusions I got wrong</h2>
+          <div class="plog__blurb">Both were reached with real evidence and written down as settled. Both were wrong.
+            Keeping them on the record, because the reasoning that produced them is the interesting part.</div>
+        </div>
+
+        <div class="plog__entry">
+          <div class="plog__meta">
+            <div class="plog__date">Retracted</div>
+            <div class="tag tag--retracted">Wrong</div>
+          </div>
+          <div>
+            <div class="plog__claim">&ldquo;Distributed inference over a Thunderbolt ring is inherently slow.&rdquo;
+            </div>
+            <p class="plog__body">The evidence: a real request to a 106B reasoning model took over twelve minutes to
+              produce 300 tokens, with all three nodes pinned near 100% the entire time. Not hung &mdash; genuinely
+              working, just slow. I wrote it up as the unavoidable cost of pipeline parallelism over TCP without RDMA.
+            </p>
+            <p class="plog__body">That measurement was taken on a cluster in a corrupted state, and I generalised from
+              it. The same model, correctly configured, now runs at about 20.8 tokens per second &mdash; so those 300
+              tokens take roughly fourteen seconds rather than twelve minutes. Not a refinement of the original figure:
+              about fifty times off it.</p>
+            <p class="plog__body">Distributed inference here <em>is</em> slower than a single machine, and the largest
+              models do run at single-digit tokens per second. But that is a property of moving every token around a TCP
+              ring, not the catastrophe one broken measurement implied. The lesson is narrower and more useful than
+              &ldquo;benchmark carefully&rdquo;: a number taken from a system you have not yet verified is healthy is
+              not a measurement of the system, it is a measurement of the fault.</p>
+          </div>
+        </div>
+
+        <div class="plog__entry">
+          <div class="plog__meta">
+            <div class="plog__date">Retracted</div>
+            <div class="tag tag--retracted">Wrong</div>
+          </div>
+          <div>
+            <div class="plog__claim">&ldquo;Point-to-point send and receive is broken on MLX's ring backend.&rdquo;
+            </div>
+            <p class="plog__body">The evidence looked strong. Collective operations worked in about 5ms. Sending from
+              rank 2 to rank 1 completed in 0.08s. Sending from rank 1 to rank 0 hung forever &mdash; on a link that
+              benchmarked 32KB TCP round trips at 0.32ms. Repeated across runs.</p>
+            <p class="plog__body">The real cause was a stale Thunderbolt interface mapping. A reboot had renumbered the
+              interfaces, and I had reapplied the old addresses from my notes, putting rank 0's advertised address on
+              the wrong physical interface. Cluster initialisation and every collective still worked, so the cluster
+              looked healthy &mdash; only direct send and receive into that one mis-mapped rank failed.</p>
+            <p class="plog__body">Two things made this genuinely hard to see. MLX enqueues distributed operations on the
+              GPU stream, so a <em>networking</em> misconfiguration surfaced as <span
+                class="tok">kIOGPUCommandBufferCallbackErrorTimeout</span> &mdash; a GPU error. And the repeated
+              timeouts then wedged the Metal driver, so that afterwards even single-node inference hung with the GPU
+              pinned at 100%. That invalidated other tests I had run in the same window and sent me further down the
+              wrong path. Only a reboot cleared it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap" style="padding-left: 0; padding-right: 0;">
+        <div class="endnote">
+          <div class="endnote__label">What actually generalises</div>
+          <div class="endnote__body">An error's category can be a lie. A GPU timeout meant a networking fault; a clean
+            <span class="tok">ping</span> meant nothing about whether the process could connect. In both cases the
+            diagnostic I trusted was measuring something adjacent to the thing I cared about. The fix in both cases was
+            the same: reproduce the failure using the exact component under suspicion, not a convenient stand-in.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="guide__item">
-      <div class="guide__cat">Permissions</div>
-      <div>
-        <div class="guide__rule">Grant Local Network access to your actual Python binary first.</div>
-        <p class="guide__body">macOS silently blocks same-subnet connections from non-Apple-signed binaries. Homebrew Python is one; <span class="tok">ping</span>, <span class="tok">nc</span> and system Python are exempt. So every connectivity check you run will pass while the thing that matters fails, and the error you get is a generic connection failure with no mention of permissions. The prompt cannot appear over SSH, so trigger it locally at each machine before you start.</p>
+    <!-- ============ 06 THE CONSTRAINT ============ -->
+
+    <div class="section wrap">
+      <div class="section__head"><span class="section__num">05</span>
+        <h2 class="section__label">The constraint that shapes everything</h2>
+      </div>
+
+      <p class="prose">MLX offers two ways to split a model across machines, and they have very different rules.</p>
+
+      <p class="prose"><strong>Tensor parallelism</strong> slices individual weight matrices across nodes. It is usually
+        described as the faster of the two, and on a high-bandwidth interconnect it is. That reasoning may well invert
+        here: it synchronises once per <em>projection</em> rather than once per layer boundary, which is many more round
+        trips per token, and round trips are exactly what a TCP ring with no RDMA is bad at. I would not state that as a
+        finding &mdash; the only tensor-parallel model I measured is a dense 72B that activates every parameter on every
+        token, so it is doing far more compute than the sparse models it sits next to in the table, and the comparison
+        is not clean. It is a reason to measure rather than to assume the usual ordering holds on hardware like this.
+        What tensor parallelism definitely does require is that the shapes divide evenly: the number of attention heads
+        and the number of key-value heads must both be divisible by the node count.</p>
+
+      <p class="prose"><strong>Pipeline parallelism</strong> assigns whole transformer layers to each node instead. It
+        has no divisibility constraint whatsoever &mdash; leftover layers simply go to the first few ranks. The cost is
+        a full round trip through the ring per token.</p>
+
+      <p class="prose">I checked four major open models against the tensor-parallel rule at three nodes. Every single
+        one failed, and the reason is more specific than &ldquo;the numbers are awkward&rdquo;. Some attention-head
+        counts do divide by three &mdash; 96 and 48 both do. But <em>both</em> conditions have to hold, and the
+        key-value head counts are 8 and 4. Grouped-query attention has driven those numbers down to small powers of two,
+        and a small power of two never divides by three. This is not a property of any particular model; it is a
+        property of how the field designs transformers.</p>
+
+      <div class="baseline" style="margin-top: 40px;">
+        <div class="baseline__label">The finding</div>
+        <div class="baseline__text">In stock MLX, three nodes is a genuinely awkward shape &mdash; a fourth would divide
+          64 heads, 8 key-value heads, 4096 and 8192 hidden sizes and 14336 and 28672 intermediate sizes, unlocking the
+          ecosystem with no code at all. That is where I stopped the first time, and it was the wrong place to stop.
+        </div>
+      </div>
+
+      <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">And for quantized models, a third gate</h3>
+
+      <p class="prose">Head-count divisibility is necessary but not sufficient. Quantized weights are stored in groups
+        &mdash; typically 64 values sharing a scale factor &mdash; and a shard cannot cut a group in half. So every
+        sharded dimension, divided by the node count, must <em>still</em> be divisible by the quantization group size.
+      </p>
+
+      <p class="prose">A worked example that fails. DeepSeek-V2-Lite across two nodes passes every head-count check: 16
+        attention heads, 16 key-value heads, hidden size 2048, all cleanly divisible. It still breaks, on the
+        intermediate size:</p>
+
+      <p class="code__label">The failure, in full</p>
+      <div class="code"><span class="c"># intermediate_size = 10944, split across 2 nodes</span>
+        10944 / 2 = 5472
+        5472 % 64 = 32 <span class="c"># not a multiple of the group size</span>
+
+        ValueError: [quantize] The last dimension of the matrix needs to be
+        divisible by the quantization group size 64. However the provided
+        matrix has shape (2048, 5472)</div>
+
+      <p class="prose" style="margin-top: 28px;">This error appears at first inference &mdash; after the download, after
+        the load. Checking three numbers in <span class="tok">config.json</span> beforehand takes two minutes and saves
+        hours.</p>
+
+      <p class="prose">Which left the actual problem. Pipeline parallelism has no divisibility constraint and would work
+        fine at three nodes &mdash; but at the time, upstream MLX implemented it for only a handful of architectures,
+        and <span class="tok">qwen3_moe</span>, the architecture of the target model, was not among them. As shipped,
+        the target model could not be distributed across this cluster by either strategy.</p>
+
+      <p class="prose">The obvious read is that three was the wrong number and a fourth machine was the fix. That is
+        what I assumed for longer than I should have. But &ldquo;the library does not implement this&rdquo; and
+        &ldquo;the hardware cannot do this&rdquo; are very different statements, and only the second one is a reason to
+        buy something. So before ordering anything, I went to read why the constraint existed.</p>
+    </div>
+
+    <!-- ============ 07 THE PATCHES ============ -->
+
+    <div class="section wrap">
+      <div class="section__head"><span class="section__num">06</span>
+        <h2 class="section__label">Two patches to MLX</h2>
+      </div>
+
+      <p class="prose">Both started as edits to files inside the installed package, which any upgrade silently reverts.
+        That is worth stating plainly rather than presenting these as clean contributions &mdash; and it was the wrong
+        way to carry them, in a way that later came close to costing me one outright. The model-side patches have since
+        moved onto a fork branch off upstream <span class="tok">main</span>, installed editable, so each local change is
+        a commit rather than an edit and upgrading is a merge instead of a silent revert. The core sharding change is
+        still a patched file inside the installed package, because that package ships compiled and building it from
+        source is a heavier commitment than it has so far been worth. It is being prepared for upstream as of this
+        writing.</p>
+
+      <h3 class="guide__rule" style="margin-top: 40px; font-size: 22px;">One: pipeline support for two more
+        architectures</h3>
+
+      <p class="prose">The smaller patch. MLX already had a working pipeline implementation for other model families, so
+        this was largely a matter of applying an existing pattern to <span class="tok">qwen3_moe</span> and <span
+          class="tok">llama</span>: mix in the pipeline behaviour, iterate over only this rank's layers between a
+        receive and a send, then broadcast the final hidden state to every rank before the output norm. Around fifteen
+        to twenty lines each.</p>
+
+      <p class="prose">One wrinkle was specific to Llama. It computes attention-masking indices at construction time
+        over the <em>full</em> layer list, and those indices become invalid the moment pipelining truncates that list to
+        a single rank's share. Building the masks lazily from the rank's actual layers fixed it, with a fallback for a
+        rank that happens to own none of one mask type.</p>
+
+      <p class="prose">Verified on smaller models of each family first &mdash; an 8B Llama and a 30B Qwen3 &mdash; both
+        producing real completions with memory genuinely divided three ways before committing to the 123GB download.</p>
+
+      <p class="prose">Upstream has since added pipeline parallelism for Qwen3-MoE independently, so that half of the
+        work is now in the library for anyone on a current version &mdash; including this cluster, which runs upstream's
+        implementation now rather than mine. Retiring my own patch in favour of it is the right outcome, and also the
+        useful data point: the gap was small enough that someone else closed it within weeks. Treat &ldquo;the library
+        does not do this yet&rdquo; as a claim with a short shelf life, and check before you start writing.</p>
+
+      <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">Two: uneven tensor-parallel sharding</h3>
+
+      <p class="prose">The more interesting one, and a much larger unlock: it removes the exact-divisibility requirement
+        from tensor parallelism entirely, which applies to every architecture that already supports it rather than to
+        one model family.</p>
+
+      <p class="prose">The question worth answering first was whether the constraint was real or merely assumed. Reading
+        the source settled it: the only collective operation in the tensor-parallel forward pass sums a per-rank result
+        whose shape is already uniform regardless of how unevenly the input was split. The divisibility check was a
+        simplifying assumption in Python, not a requirement of the underlying collectives. (I confirmed separately, by
+        experiment, that a <em>different</em> collective does require uniform shapes &mdash; but that one is only used
+        in pipeline mode, so it was not in the way.)</p>
+
+      <p class="prose">The core is a helper that distributes a dimension across ranks with the remainder spread over the
+        first few, expressed in units of the quantization group size so no rank ever receives a fragment of a group:</p>
+
+      <p class="code__label">Remainder-aware splitting, in blocks</p>
+      <div class="code"><span class="c"># dim expressed in whole quantization blocks, so every rank's</span>
+        <span class="c"># slice stays a legal multiple of group_size</span>
+        blocks = dim // block
+        base, extra = divmod(blocks, N)
+
+        <span class="c"># the first `extra` ranks each take one additional block</span>
+        sizes = [(base + 1 if r &lt; extra else base) * block
+        for r in range(N)]
+
+        <span class="c"># reduces to the old even split when dim % (N * block) == 0</span>
+      </div>
+
+      <p class="prose" style="margin-top: 28px;">The genuinely hard part was quantized weights. A quantized layer is not
+        one array but three &mdash; the packed weights, the scales, and the biases &mdash; and they have
+        <em>different</em> axis lengths, because the weights are packed by bit width while the scales and biases are
+        packed by group size. Splitting each of the three independently at what looks like the same position produces
+        shards that silently do not correspond to each other. The fix scales the split boundaries by the exact integer
+        ratio between each array's real axis length and the logical dimension, so all three are cut at matching logical
+        positions.
+      </p>
+
+      <p class="prose">There was one more layer to it. Grouped-query attention models share each key-value head across
+        several query heads, so splitting the two independently can leave a rank with a ratio that does not work. The
+        model-side fix distributes whole key-value head <em>groups</em> across ranks, then derives the query and output
+        projection sizes from that grouping &mdash; with the output projection's split forced to match the query
+        projection's exactly, since they partition the same dimension on either side of the local computation.</p>
+
+      <div class="endnote">
+        <div class="endnote__label">Verified, and its limits</div>
+        <div class="endnote__body">Confirmed on <span class="tok">Qwen2.5-72B-Instruct-4bit</span> &mdash; 64 heads, 8
+          key-value heads, hidden size 8192, intermediate 29568, none of which divide by three. It could not run
+          distributed on this cluster at all before the patch. Afterwards it launched with no errors and produced
+          correct answers, with memory at 14 / 14 / 13GB across the nodes. The grouped-query fix is currently applied to
+          one model file only; every other architecture would need the same treatment individually before uneven tensor
+          parallelism works there.</div>
       </div>
     </div>
 
-    <div class="guide__item">
-      <div class="guide__cat">Model transfer</div>
-      <div>
-        <div class="guide__rule">Download once, then copy over the Thunderbolt addresses explicitly.</div>
-        <p class="guide__body">Each node needs the full model &mdash; sharding happens at load time, not download time. Three simultaneous downloads just split one home connection three ways. Download on one node, then <span class="tok">rsync</span> to the others across the Thunderbolt links, which run in parallel because they are separate cables. Use the point-to-point IPs, not hostnames: a bare hostname resolves through Tailscale and transfers at roughly a two-thousandth of the speed with no error, no warning, and no obvious symptom beyond seeming slow. This caught me twice in one session.</p>
+    <!-- ============ 08 RESULTS ============ -->
+
+    <div class="section wrap">
+      <div class="section__head section__head--spread">
+        <div style="display: flex; align-items: baseline; gap: 20px;">
+          <span class="section__num">07</span>
+          <h2 class="section__label">What runs, and how fast</h2>
+        </div>
+        <div class="section__note">Measured on the cluster &middot; blanks left blank</div>
+      </div>
+
+      <div class="dtable">
+        <div class="dtable__scroll">
+
+          <div class="drow drow--head">
+            <div class="dth">Model</div>
+            <div class="dth">Disk</div>
+            <div class="dth">Strategy</div>
+            <div class="dth">Memory per node</div>
+            <div class="dth">Throughput</div>
+          </div>
+
+          <div class="drow">
+            <div class="dname">Meta-Llama-3.1-8B-Instruct<small>8B dense &middot; 4-bit</small></div>
+            <div class="dcell dcell--num">4.2GB</div>
+            <div class="dcell">Pipeline<span class="dpatch">our patch</span></div>
+            <div class="dcell">2.1 / 2.2 / 2.1GB</div>
+            <div class="dcell dcell--num">~62.5 tok/s</div>
+          </div>
+
+          <div class="drow">
+            <div class="dname">DeepSeek-V2-Lite-Chat<small>16B MoE &middot; 2.4B active &middot; 4-bit</small></div>
+            <div class="dcell dcell--num">8.2GB</div>
+            <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
+            <div class="dcell">3.4 / 3.4 / 3.1GB</div>
+            <div class="dcell dcell--num">~62.5 tok/s</div>
+          </div>
+
+          <div class="drow">
+            <div class="dname">Qwen3-30B-A3B<small>30B MoE &middot; 4-bit &middot; reasoning</small></div>
+            <div class="dcell dcell--num">17GB</div>
+            <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
+            <div class="dcell">6.1 / 6.1 / 6.1GB</div>
+            <div class="dcell dcell--num">~50 tok/s</div>
+          </div>
+
+          <div class="drow">
+            <div class="dname">Qwen2.5-72B-Instruct<small>72B dense &middot; 4-bit &middot; divides by neither 3 nor
+                4</small></div>
+            <div class="dcell dcell--num">41GB</div>
+            <div class="dcell">Tensor<span class="dpatch">uneven patch</span></div>
+            <div class="dcell">14 / 14 / 13GB</div>
+            <div class="dcell dcell--num">~8.3 tok/s</div>
+          </div>
+
+          <div class="drow">
+            <div class="dname">Qwen3-Coder-Next<small>4-bit &middot; no pipeline or shard support &mdash; single
+                node</small></div>
+            <div class="dcell dcell--num">42GB</div>
+            <div class="dcell">Standalone<br><span class="dcell--none">one node</span></div>
+            <div class="dcell">42GB on one node</div>
+            <div class="dcell dcell--num">~35.7 tok/s</div>
+          </div>
+
+          <div class="drow">
+            <div class="dname">GLM-4.5-Air<small>106B MoE &middot; 4-bit &middot; reasoning</small></div>
+            <div class="dcell dcell--num">56GB</div>
+            <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
+            <div class="dcell">18 / 19 / 18GB</div>
+            <div class="dcell dcell--num">~20.8 tok/s</div>
+          </div>
+
+          <div class="drow drow--feature">
+            <div class="dname">Qwen3-235B-A22B-Instruct-2507<small>235B MoE &middot; 22B active &middot; 4-bit &middot;
+                the target</small></div>
+            <div class="dcell dcell--num">123GB</div>
+            <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
+            <div class="dcell">40 / 41 / 41GB</div>
+            <div class="dcell dcell--num">~12.6 tok/s</div>
+          </div>
+
+          <div class="drow drow--last">
+            <div class="dname">GLM-4.6<small>3-bit &middot; reasoning &middot; largest footprint tested</small></div>
+            <div class="dcell dcell--num">144GB</div>
+            <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
+            <div class="dcell">49 / 51 / 45GB</div>
+            <div class="dcell dcell--num">~8.1 tok/s</div>
+          </div>
+
+        </div>
+
+        <p class="dtable__note">Measured in a single sweep so the numbers are comparable: one roughly 250-token
+          completion per model, timed end to end over the API, with memory read from <span class="tok">top</span> rather
+          than <span class="tok">ps</span>. The three reasoning models spend part of that budget on hidden thinking
+          tokens before the visible answer, and those tokens are counted &mdash; this is real throughput, not throughput
+          adjusted to flatter it. The patch labels say what was required at the time the work was done; upstream has
+          since absorbed the Qwen3-MoE pipeline support, so most of these now run on the library's own code rather than
+          mine.</p>
+      </div>
+
+      <p class="prose" style="margin-top: 40px;">The 235B row is the one the project was for. 40 + 41 + 41 comes to
+        122GB against a model that occupies 123GB on disk &mdash; which is the actual proof that it split three ways
+        rather than quietly replicating onto each node. Replication would have shown roughly 123GB on every machine, and
+        would not have fit on any of them. GLM-4.6 pushes that further: 145GB spread across three machines that hold
+        64GB each, which is simply not a thing any one of them can do.</p>
+
+      <p class="prose">The strategy column is worth reading against that, though it has moved since the work was done.
+        When I started, most of these could not be distributed across three nodes at all; today five of the eight run on
+        stock MLX, because upstream absorbed the Qwen3-MoE pipeline support in the meantime. That is the honest current
+        picture, and it is a better outcome than the one where my patch stays necessary.</p>
+
+      <p class="prose">Two rows still depend on local changes, and they are the two that make the point. <span
+          class="tok">Qwen2.5-72B</span> fails divisibility by three on its head counts, hidden size and intermediate
+        size alike, and runs in tensor-parallel mode anyway &mdash; the constraint that supposedly rules it out was
+        removed rather than worked around. Llama-3.1-8B needs pipeline support that <span class="tok">llama.py</span>
+        still lacks upstream. Neither is a model that happened to fit. That is the difference between three nodes being
+        a limitation and three nodes being a starting point.</p>
+
+      <p class="prose">The throughput column is the honest headline, and it falls off roughly with size: about 62 tokens
+        per second for the small models, 50 at 30B, 21 at 106B, and single digits at the top end. That is the cost of
+        moving every token around the ring, and it is not a bug waiting to be tuned away.</p>
+
+      <p class="prose">The Qwen3-Coder-Next row is the useful control, because it is the one model here that is
+        <em>not</em> distributed. It has no pipeline or sharding support upstream and it did not need any &mdash; 42GB
+        fits one node with room to spare, so it runs on a single machine at about 36 tokens per second. Set that against
+        GLM-4.6, three and a half times the size, spread over all three nodes, at 8. The cluster is not a faster
+        machine. It is a machine that can hold things no single node here can hold, and you pay for that in latency on
+        every token.
+      </p>
+
+      <p class="prose">Which is worth being blunt about if you are deciding whether to build one: if every model you
+        care about fits on one box, buy the bigger box. This only pays off for the models that do not fit, and it pays
+        off in capability rather than speed.</p>
+    </div>
+
+    <!-- ============ CLOSING ============ -->
+
+    <div class="section wrap">
+      <div class="slab">
+        <div class="slab__kicker">What I would tell someone starting</div>
+        <div class="slab__rule">Read the source before you buy hardware. Test with the real binary. Re-detect, never
+          remember.</div>
+        <div class="slab__cols">
+          <p>The constraint that shaped this project turned out not to be a constraint. Three nodes looked like the
+            wrong number for months, and the fix was framed everywhere as buying a fourth machine. It was about 400
+            lines of Python standing in for a limit the hardware never had. Check whether the wall you have hit is made
+            of silicon or of someone's simplifying assumption &mdash; the second kind you can move.</p>
+          <p>The debugging lesson was sharper. Twice I trusted a diagnostic that measured something adjacent to what I
+            cared about &mdash; a clean ping for a blocked process, a GPU timeout for a networking fault &mdash; and
+            both times it cost hours. Reproduce failures with the exact component under suspicion.</p>
+          <p>Machine state is not what your notes say it is. macOS renumbers Thunderbolt interfaces across reboots, and
+            reapplying a saved mapping produced a cluster that passed every health check while the one operation I
+            needed hung silently.</p>
+          <p>And be clear about what you are buying. This is capacity, not speed &mdash; the ability to run something on
+            hardware you already own that would not otherwise fit anywhere. Judged as a fast chat machine it is a bad
+            one. Judged as 192GB of pooled memory, it does exactly what it was meant to.</p>
+        </div>
       </div>
     </div>
 
-    <div class="guide__item">
-      <div class="guide__cat">After every reboot</div>
-      <div>
-        <div class="guide__rule">Re-detect the Thunderbolt interfaces. Never reapply saved notes.</div>
-        <p class="guide__body">A reboot wipes the runtime network configuration <em>and</em> macOS renumbers the interfaces &mdash; what was <span class="tok">en2</span> becomes <span class="tok">en3</span>, and the addresses move with it. Reapplying a previously-recorded mapping puts a rank's address on the wrong physical interface, which is a uniquely nasty failure: the cluster initialises fine and all collective operations pass, so it looks healthy. Only point-to-point send and receive hangs. That is exactly what pipeline parallelism uses.</p>
-      </div>
-    </div>
-
-    <div class="guide__item">
-      <div class="guide__cat">Serving defaults</div>
-      <div>
-        <div class="guide__rule">Raise <span class="tok">--max-tokens</span> before you use it for anything real.</div>
-        <p class="guide__body">The server defaults to <span class="tok">512</span> tokens per completion. That is fine for a chat reply and silently wrong for everything else &mdash; a coding task stops mid-function, a long document stops mid-paragraph, an agent loop stops mid-plan. There is no error; the response just ends and the finish reason says it hit the limit, which is easy to miss when you are reading the text rather than the envelope. I default mine to <span class="tok">8192</span>.</p>
-        <p class="guide__body" style="margin-top: 14px;">Two more worth setting deliberately on a cluster this full. <span class="tok">--prompt-cache-size</span> defaults to holding ten distinct KV caches in memory, which is generous when your spare headroom is single-digit gigabytes per node &mdash; I lowered it to five. And a reasoning model's hidden thinking tokens cannot be turned off by asking it politely in the prompt; that takes <span class="tok">--chat-template-args '{&quot;enable_thinking&quot;:false}'</span> at launch, using the <span class="tok">enable_thinking</span> convention that the Qwen3 and GLM 4.x chat templates share. Asking in the prompt was the first thing I tried, and it did nothing.</p>
-      </div>
-    </div>
-
-    <div class="guide__item">
-      <div class="guide__cat">Library version</div>
-      <div>
-        <div class="guide__rule">Check whether upstream already fixed it before you debug it.</div>
-        <p class="guide__body">A <span class="tok">pip install</span> gives you the latest <em>tagged</em> release, and on a library moving this fast that can be months behind the branch. My cluster runs 0.31.3, tagged in April. A bug I spent an evening on had been fixed upstream in August &mdash; and that fix is still in no tagged release at all, so no amount of upgrading through normal channels would have delivered it.</p>
-        <p class="guide__body" style="margin-top: 14px;">So search the commit log on <span class="tok">main</span> first, not last. And if you are carrying local patches, stop editing files inside <span class="tok">site-packages</span> &mdash; that is what forces the choice between your changes and upstream's fixes. Fork the repo, put your patches on a branch off <span class="tok">main</span> as ordinary commits, and install that branch editable. Upgrading becomes a merge you can read, your patches survive it, and you inherit everything upstream has fixed since the last tag. That is what I should have done at the start.</p>
-        <p class="guide__body" style="margin-top: 14px;">It works cleanly for a pure-Python package. For a compiled one, where building from source is a much heavier commitment, a patched file under <span class="tok">site-packages</span> may still be the pragmatic answer &mdash; but then it is the one you have to remember to re-apply, so write down where it lives.</p>
-        <p class="guide__body" style="margin-top: 14px;">The migration to that arrangement proved the point on the way through. The <span class="tok">pip uninstall</span> that preceded it deleted one of the patches outright, because that patch existed only as an edited file and nothing else knew it was there &mdash; recovered by luck, from a copy an earlier session had left in a temporary directory. So when you make the move, inventory from the filesystem rather than from your notes: run <span class="tok">find</span> over the installed package for <span class="tok">.bak</span> files and count them. A patch that is not a commit somewhere is one uninstall away from gone, and you will find out at the worst moment.</p>
-      </div>
-    </div>
-
-    <div class="guide__item">
-      <div class="guide__cat">Verification</div>
-      <div>
-        <div class="guide__rule">Use <span class="tok">top</span> for memory, not <span class="tok">ps</span>.</div>
-        <p class="guide__body">On Apple silicon the RSS column badly undercounts MLX's Metal-backed allocations. It reported 1.6GB per node for a 38GB model, which reads as a catastrophic failure. <span class="tok">top -pid &lt;pid&gt; -l 1 -stats pid,mem</span> gave the real figures. Since per-node memory is how you prove a model genuinely split rather than silently replicated, using the wrong tool here means you cannot tell success from failure.</p>
-      </div>
-    </div>
-
-    <div class="guide__item">
-      <div class="guide__cat">Expectations</div>
-      <div>
-        <div class="guide__rule">This buys capacity, not speed.</div>
-        <p class="guide__body">A cluster like this lets you run models that fit on no single machine you own. It does not make them fast. Measured across the same sweep, throughput falls from about 62 tokens per second on the small models to 21 at 106B and 8 at the top end &mdash; while a 42GB model that fits on <em>one</em> node runs at 36 without any of this machinery. If everything you care about fits on one box, buy the bigger box. This is worth doing only for the models that do not fit, and what you get is capability, not speed.</p>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ============ 02 THE GOAL ============ -->
-
-<div class="section wrap">
-  <div class="section__head"><span class="section__num">02</span><h2 class="section__label">The goal</h2></div>
-
-  <p class="prose">One model, sharded across three machines. Not three independent model servers behind a load balancer &mdash; a single set of weights split into thirds, with every token passing through all three nodes. The three Macs are <span class="tok">ai-1</span>, <span class="tok">ai-2</span> and <span class="tok">ai-3</span>: 2021 M1 Max MacBook Pros, 64GB of unified memory each, bought second-hand. Individually they run a 30B model comfortably. Pooled, they have 192GB, which is enough for a 235B-parameter model at 4-bit quantization.</p>
-
-  <p class="prose">The target was <span class="tok">Qwen3-235B-A22B-Instruct-2507-4bit</span> &mdash; 123GB on disk, leaving headroom for the key-value cache. <span class="tok">ai-1</span> acts as the controller and the private API endpoint; the other two are compute workers. Admin access runs over Wi-Fi and Tailscale; the model interconnect runs over direct Thunderbolt cabling and nothing else.</p>
-
-  <div class="when" style="margin-top: 40px;">
-    <div class="when__col">
-      <div class="when__kicker when__kicker--pos">What the hardware gives you</div>
-      <div class="when__title">Memory you cannot otherwise buy</div>
-      <div class="when__body">192GB of unified memory across three second-hand laptops costs a fraction of a single machine with that much, and every node's GPU participates. For models too large to fit anywhere else you own, this is the whole point.</div>
-    </div>
-    <div class="when__col">
-      <div class="when__kicker when__kicker--neg">What it does not</div>
-      <div class="when__title">Thunderbolt 4, so no RDMA</div>
-      <div class="when__body">MLX's JACCL fast path needs Thunderbolt 5 and a direct cable between every pair. The M1 Max has TB4, so the only option is the TCP ring backend &mdash; a full round trip through every rank, per token, forever.</div>
-    </div>
-  </div>
-
-  <p class="prose" style="margin-top: 36px;">That constraint is worth sitting with, because it sets the ceiling on everything that follows. The ring backend is a <em>logical</em> communication algorithm, not a physical cabling requirement &mdash; it runs over any IP-reachable network. But it is TCP, it has no remote direct memory access, and each token is a sequential trip around the ring. No amount of configuration removes that.</p>
-</div>
-
-<!-- ============ 03 THE PLAN ============ -->
-
-<div class="section wrap">
-  <div class="section__head"><span class="section__num">03</span><h2 class="section__label">The plan</h2></div>
-
-  <p class="prose">Cable all three machines into a physical ring &mdash; <span class="tok">ai-1</span> to <span class="tok">ai-2</span>, <span class="tok">ai-2</span> to <span class="tok">ai-3</span>, <span class="tok">ai-3</span> back to <span class="tok">ai-1</span> &mdash; so every leg of the ring backend's nearest-neighbour communication has a real one-hop link with no relaying. Closing a loop like that would normally risk a broadcast storm, since macOS's Thunderbolt Bridge has no spanning-tree protection. It is safe here only because the setup tool explicitly tears the bridge down and replaces it with isolated point-to-point links, one per cable, each on its own tiny subnet.</p>
-
-  <div class="meta-row">
-    <div class="meta"><span class="meta__k">ai-1</span><span class="meta__v">rank 0</span><span class="meta__x">controller &middot; API endpoint</span></div>
-    <div class="meta"><span class="meta__k">ai-2</span><span class="meta__v">rank 1</span><span class="meta__x">worker</span></div>
-    <div class="meta"><span class="meta__k">ai-3</span><span class="meta__v">rank 2</span><span class="meta__x">worker</span></div>
-  </div>
-
-  <p class="prose" style="margin-top: 36px;">Everything else was scripted from my laptop, so that a node could be rebuilt from scratch without touching it physically: SSH key distribution, disabling sleep, matching Python environments at identical paths on all three, pushing a Hugging Face token, and configuring the Thunderbolt network. The API binds only to loopback on the controller and is reached through an SSH tunnel &mdash; nothing about this is exposed to the network.</p>
-
-  <p class="code__label">Launching the cluster</p>
-  <div class="code">mlx.launch --backend ring --hostfile cluster.json --env MLX_METAL_FAST_SYNCH=1 -- \
-  python -m mlx_lm.server \
-  --model mlx-community/Qwen3-235B-A22B-Instruct-2507-4bit \
-  --pipeline --host 127.0.0.1 --port 8080</div>
-
-  <p class="prose" style="margin-top: 28px;">That is the finished command. Getting to the point where it ran took considerably longer than writing it.</p>
-</div>
-
-<!-- ============ 04 WHAT BROKE ============ -->
-
-<div class="section wrap">
-  <div class="section__head section__head--spread">
-    <div style="display: flex; align-items: baseline; gap: 20px;">
-      <span class="section__num">04</span><h2 class="section__label">What broke</h2>
-    </div>
-    <div class="section__note">In roughly the order it happened</div>
-  </div>
-
-  <p class="prose">Almost none of these were interesting distributed-systems problems. They were operating-system behaviour, shell trivia, and one dead cable. That is worth saying plainly, because the hard part of this project was not the parallelism &mdash; it was everything underneath it.</p>
-
-  <div class="history" style="margin-top: 36px;">
-
-    <div class="history__entry">
-      <div class="history__date">Shell</div>
-      <div>
-        <div class="history__what"><span class="tok">USERNAME</span> is a reserved variable in zsh</div>
-        <p class="history__why">Assigning to it does nothing at all &mdash; zsh treats it as a special parameter tied to the real system user. A provisioning script that stored the SSH username there silently ignored every <span class="tok">--user</span> override and used the login name instead. No error, no warning. Renaming the variable fixed it.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">SSH</div>
-      <div>
-        <div class="history__what">The controller needs passwordless SSH to itself</div>
-        <p class="history__why">MLX's launcher treats the controller as just another host in the list and connects to it the same way it connects to the workers. The key-distribution script only pushed keys outward, so the controller could reach both workers but not itself. Host-key fingerprints need accepting per <em>address</em>, too &mdash; the Thunderbolt IPs are separate entries from the hostnames, and a non-interactive script fails rather than prompting.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Networking</div>
-      <div>
-        <div class="history__what">Local hostname resolution stops working across networks</div>
-        <p class="history__why">The <span class="tok">.local</span> multicast DNS names do not cross network segments. Switching my laptop to a different Wi-Fi network for an unrelated reason made all three nodes unreachable, in a way that looked exactly like the cluster being down. Tailscale hostnames work regardless of which network the client is on, so admin access moved there permanently.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Power</div>
-      <div>
-        <div class="history__what">Idle machines slept and vanished</div>
-        <p class="history__why">An entire-cluster &ldquo;everything times out at once&rdquo; episode early on turned out to be three laptops going to sleep. <span class="tok">pmset -a disablesleep 1</span> on each node, applied during provisioning. Later, one node drained its battery to zero while plugged in and hard-stopped, which is when I learned that a drained MacBook needs a physical power-button press to come back.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Permissions</div>
-      <div>
-        <div class="history__what">The ring would not connect, and the network was fine</div>
-        <p class="history__why">Cluster initialisation failed with a connection error on specific node pairs while others worked. Ping was clean. A raw TCP connection to the same address and port succeeded instantly. The firewall was off. It looked like an upstream bug, and it matched an open issue in MLX's tracker almost exactly.</p>
-        <p class="history__why">It was not. Two mundane local causes, both requiring physical access. First: macOS Local Network Privacy was silently blocking the Homebrew Python binary from making same-subnet connections. Apple-signed binaries are exempt &mdash; which is precisely why every diagnostic I had run passed. A controlled test settled it: alternating connection attempts to the same peer in the same second, system Python succeeded eight times out of eight, Homebrew Python zero out of eight. Second: one of the three Thunderbolt cables was dead, showing inactive on both ends.</p>
-        <p class="history__note">The transferable lesson: when you are checking whether a specific process can reach the network, test with <em>that process</em>. A proxy tool can be exempt from permissions the real one is not.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Transfer</div>
-      <div>
-        <div class="history__what">Model copies silently took the slow path</div>
-        <p class="history__why">Copying the model between nodes using bare hostnames routed the transfer over Tailscale instead of the direct Thunderbolt link: roughly 170KB/s against the 340MB/s the cable actually delivers, with no error and no indication anything was wrong beyond appearing slow. It happened twice in one session, so I wrote a script that derives the correct point-to-point address by matching subnets on both ends rather than trusting any cached mapping.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Measurement</div>
-      <div>
-        <div class="history__what"><span class="tok">ps</span> undercounts MLX memory badly</div>
-        <p class="history__why">Verifying that a model had genuinely split across nodes meant checking per-node memory. The RSS column showed about 1.6GB per node for a 38GB model &mdash; alarming, and completely wrong. Metal-backed unified-memory allocations are not fully attributed to a process's RSS. Measuring with <span class="tok">top</span> instead gave 14 / 14 / 13GB, which matched the model. The whole verification depended on picking the right tool.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Tool calling</div>
-      <div>
-        <div class="history__what">One trailing newline broke every tool call</div>
-        <p class="history__why">Pointing a coding agent at the cluster, every tool call came back as <span class="tok">Model tried to call unavailable tool 'bash\n'</span> &mdash; with the tool named <span class="tok">bash</span> plainly present in the list of available tools. Two candidates: the server was emitting a dirty name, or the client was mangling the streamed response. They have completely different fixes, so the first move was the cheapest test that separates them &mdash; call the endpoint directly and print the raw <span class="tok">repr</span> of the function name, rather than reading the rendered text.</p>
-        <p class="history__why">The server was returning <span class="tok">'bash\n'</span>. GLM emits tool calls with the function name on its own line before the arguments, and the parser captured it with a regex in <span class="tok">DOTALL</span> mode that swallowed the newline. The argument keys and values two lines below were already being stripped; only the name was missed.</p>
-        <p class="history__why">The part worth remembering is the second bug hiding behind the first. That dirty name gets matched against the tool schema to decide which arguments are strings. <span class="tok">'bash\n'</span> matches nothing, so every declared string argument was handed to a deserializer instead &mdash; meaning a string that happened to look like a number would have been silently coerced to the wrong type. The visible failure was a missing tool. The invisible one was type corruption in the arguments, and it would have surfaced much later as something far stranger.</p>
-        <p class="history__note">Upstream had fixed this a fortnight earlier, in a commit that has still not reached a tagged release. I found that out after writing my own identical one-line fix. Searching the upstream log first would have cost two minutes.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Download</div>
-      <div>
-        <div class="history__what">A finished download that still looked incomplete</div>
-        <p class="history__why">The 123GB download reported success and exited cleanly, but seven zero-byte <span class="tok">.incomplete</span> placeholder files remained in the cache. They were orphans from an earlier retried attempt &mdash; the real, complete files sat alongside them under the same hashes. The way to tell the difference is not to count placeholder files but to check whether any symlink in the snapshot fails to resolve. None did.</p>
-      </div>
-    </div>
-
-    <div class="history__entry">
-      <div class="history__date">Migration</div>
-      <div>
-        <div class="history__what">The cleanup that nearly destroyed the work</div>
-        <p class="history__why">Moving off hand-edited files and onto the fork branch was the right fix, and it was the closest this project came to losing something irreplaceable. The plan was correct: extract each local patch as a diff, then uninstall the package and reinstall from git. I extracted the patches my notes listed. There was a fourth one, written in a different session and written up in a different document, and I had not read that document yet.</p>
-        <p class="history__why"><span class="tok">pip uninstall</span> removed the live file on all three nodes at once. Only the pre-patch backup survived, which is precisely the version without the work in it. Then every recovery route came up empty in turn: no compiled bytecode left behind, no Time Machine local snapshots on any node, nothing in the client-side clone but vanilla upstream, no branch or pull request anywhere holding it, and the per-node home-directory git repos exclude the virtual environment &mdash; deliberately, since the first commit.</p>
-        <p class="history__why">What saved it was a stale scratchpad directory under <span class="tok">/private/tmp</span>, left behind months earlier by the session that first wrote the patch. A full copy was still sitting there. Two independent reconstructions of the file then agreed byte for byte, which is the only reason it could be trusted rather than merely hoped over; it is now a real commit, re-verified end to end against the same 72B model as the original.</p>
-        <p class="history__note">Two things generalise. Prose describing a patch is not the patch &mdash; that file was thoroughly documented and the documentation could not restore a line of it. And do not trust your notes to enumerate your own hand-edits: run <span class="tok">find</span> over the installed package for backup files and let the filesystem tell you how many patches you actually have, because a cluster accumulates them from sessions you have forgotten.</p>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ============ 05 WRONG TURNS ============ -->
-
-<div class="section wrap">
-  <div class="plog">
-    <div class="plog__head">
-      <h2 class="plog__title">Two conclusions I got wrong</h2>
-      <div class="plog__blurb">Both were reached with real evidence and written down as settled. Both were wrong. Keeping them on the record, because the reasoning that produced them is the interesting part.</div>
-    </div>
-
-    <div class="plog__entry">
-      <div class="plog__meta">
-        <div class="plog__date">Retracted</div>
-        <div class="tag tag--retracted">Wrong</div>
-      </div>
-      <div>
-        <div class="plog__claim">&ldquo;Distributed inference over a Thunderbolt ring is inherently slow.&rdquo;</div>
-        <p class="plog__body">The evidence: a real request to a 106B reasoning model took over twelve minutes to produce 300 tokens, with all three nodes pinned near 100% the entire time. Not hung &mdash; genuinely working, just slow. I wrote it up as the unavoidable cost of pipeline parallelism over TCP without RDMA.</p>
-        <p class="plog__body">That measurement was taken on a cluster in a corrupted state, and I generalised from it. The same model, correctly configured, now runs at about 20.8 tokens per second &mdash; so those 300 tokens take roughly fourteen seconds rather than twelve minutes. Not a refinement of the original figure: about fifty times off it.</p>
-        <p class="plog__body">Distributed inference here <em>is</em> slower than a single machine, and the largest models do run at single-digit tokens per second. But that is a property of moving every token around a TCP ring, not the catastrophe one broken measurement implied. The lesson is narrower and more useful than &ldquo;benchmark carefully&rdquo;: a number taken from a system you have not yet verified is healthy is not a measurement of the system, it is a measurement of the fault.</p>
-      </div>
-    </div>
-
-    <div class="plog__entry">
-      <div class="plog__meta">
-        <div class="plog__date">Retracted</div>
-        <div class="tag tag--retracted">Wrong</div>
-      </div>
-      <div>
-        <div class="plog__claim">&ldquo;Point-to-point send and receive is broken on MLX's ring backend.&rdquo;</div>
-        <p class="plog__body">The evidence looked strong. Collective operations worked in about 5ms. Sending from rank 2 to rank 1 completed in 0.08s. Sending from rank 1 to rank 0 hung forever &mdash; on a link that benchmarked 32KB TCP round trips at 0.32ms. Repeated across runs.</p>
-        <p class="plog__body">The real cause was a stale Thunderbolt interface mapping. A reboot had renumbered the interfaces, and I had reapplied the old addresses from my notes, putting rank 0's advertised address on the wrong physical interface. Cluster initialisation and every collective still worked, so the cluster looked healthy &mdash; only direct send and receive into that one mis-mapped rank failed.</p>
-        <p class="plog__body">Two things made this genuinely hard to see. MLX enqueues distributed operations on the GPU stream, so a <em>networking</em> misconfiguration surfaced as <span class="tok">kIOGPUCommandBufferCallbackErrorTimeout</span> &mdash; a GPU error. And the repeated timeouts then wedged the Metal driver, so that afterwards even single-node inference hung with the GPU pinned at 100%. That invalidated other tests I had run in the same window and sent me further down the wrong path. Only a reboot cleared it.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap" style="padding-left: 0; padding-right: 0;">
-    <div class="endnote">
-      <div class="endnote__label">What actually generalises</div>
-      <div class="endnote__body">An error's category can be a lie. A GPU timeout meant a networking fault; a clean <span class="tok">ping</span> meant nothing about whether the process could connect. In both cases the diagnostic I trusted was measuring something adjacent to the thing I cared about. The fix in both cases was the same: reproduce the failure using the exact component under suspicion, not a convenient stand-in.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ============ 06 THE CONSTRAINT ============ -->
-
-<div class="section wrap">
-  <div class="section__head"><span class="section__num">05</span><h2 class="section__label">The constraint that shapes everything</h2></div>
-
-  <p class="prose">MLX offers two ways to split a model across machines, and they have very different rules.</p>
-
-  <p class="prose"><strong>Tensor parallelism</strong> slices individual weight matrices across nodes. It is usually described as the faster of the two, and on a high-bandwidth interconnect it is. That reasoning may well invert here: it synchronises once per <em>projection</em> rather than once per layer boundary, which is many more round trips per token, and round trips are exactly what a TCP ring with no RDMA is bad at. I would not state that as a finding &mdash; the only tensor-parallel model I measured is a dense 72B that activates every parameter on every token, so it is doing far more compute than the sparse models it sits next to in the table, and the comparison is not clean. It is a reason to measure rather than to assume the usual ordering holds on hardware like this. What tensor parallelism definitely does require is that the shapes divide evenly: the number of attention heads and the number of key-value heads must both be divisible by the node count.</p>
-
-  <p class="prose"><strong>Pipeline parallelism</strong> assigns whole transformer layers to each node instead. It has no divisibility constraint whatsoever &mdash; leftover layers simply go to the first few ranks. The cost is a full round trip through the ring per token.</p>
-
-  <p class="prose">I checked four major open models against the tensor-parallel rule at three nodes. Every single one failed, and the reason is more specific than &ldquo;the numbers are awkward&rdquo;. Some attention-head counts do divide by three &mdash; 96 and 48 both do. But <em>both</em> conditions have to hold, and the key-value head counts are 8 and 4. Grouped-query attention has driven those numbers down to small powers of two, and a small power of two never divides by three. This is not a property of any particular model; it is a property of how the field designs transformers.</p>
-
-  <div class="baseline" style="margin-top: 40px;">
-    <div class="baseline__label">The finding</div>
-    <div class="baseline__text">In stock MLX, three nodes is a genuinely awkward shape &mdash; a fourth would divide 64 heads, 8 key-value heads, 4096 and 8192 hidden sizes and 14336 and 28672 intermediate sizes, unlocking the ecosystem with no code at all. That is where I stopped the first time, and it was the wrong place to stop.</div>
-  </div>
-
-  <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">And for quantized models, a third gate</h3>
-
-  <p class="prose">Head-count divisibility is necessary but not sufficient. Quantized weights are stored in groups &mdash; typically 64 values sharing a scale factor &mdash; and a shard cannot cut a group in half. So every sharded dimension, divided by the node count, must <em>still</em> be divisible by the quantization group size.</p>
-
-  <p class="prose">A worked example that fails. DeepSeek-V2-Lite across two nodes passes every head-count check: 16 attention heads, 16 key-value heads, hidden size 2048, all cleanly divisible. It still breaks, on the intermediate size:</p>
-
-  <p class="code__label">The failure, in full</p>
-  <div class="code"><span class="c"># intermediate_size = 10944, split across 2 nodes</span>
-10944 / 2 = 5472
-5472 % 64 = 32          <span class="c"># not a multiple of the group size</span>
-
-ValueError: [quantize] The last dimension of the matrix needs to be
-divisible by the quantization group size 64. However the provided
-matrix has shape (2048, 5472)</div>
-
-  <p class="prose" style="margin-top: 28px;">This error appears at first inference &mdash; after the download, after the load. Checking three numbers in <span class="tok">config.json</span> beforehand takes two minutes and saves hours.</p>
-
-  <p class="prose">Which left the actual problem. Pipeline parallelism has no divisibility constraint and would work fine at three nodes &mdash; but at the time, upstream MLX implemented it for only a handful of architectures, and <span class="tok">qwen3_moe</span>, the architecture of the target model, was not among them. As shipped, the target model could not be distributed across this cluster by either strategy.</p>
-
-  <p class="prose">The obvious read is that three was the wrong number and a fourth machine was the fix. That is what I assumed for longer than I should have. But &ldquo;the library does not implement this&rdquo; and &ldquo;the hardware cannot do this&rdquo; are very different statements, and only the second one is a reason to buy something. So before ordering anything, I went to read why the constraint existed.</p>
-</div>
-
-<!-- ============ 07 THE PATCHES ============ -->
-
-<div class="section wrap">
-  <div class="section__head"><span class="section__num">06</span><h2 class="section__label">Two patches to MLX</h2></div>
-
-  <p class="prose">Both started as edits to files inside the installed package, which any upgrade silently reverts. That is worth stating plainly rather than presenting these as clean contributions &mdash; and it was the wrong way to carry them, in a way that later came close to costing me one outright. The model-side patches have since moved onto a fork branch off upstream <span class="tok">main</span>, installed editable, so each local change is a commit rather than an edit and upgrading is a merge instead of a silent revert. The core sharding change is still a patched file inside the installed package, because that package ships compiled and building it from source is a heavier commitment than it has so far been worth. It is being prepared for upstream as of this writing.</p>
-
-  <h3 class="guide__rule" style="margin-top: 40px; font-size: 22px;">One: pipeline support for two more architectures</h3>
-
-  <p class="prose">The smaller patch. MLX already had a working pipeline implementation for other model families, so this was largely a matter of applying an existing pattern to <span class="tok">qwen3_moe</span> and <span class="tok">llama</span>: mix in the pipeline behaviour, iterate over only this rank's layers between a receive and a send, then broadcast the final hidden state to every rank before the output norm. Around fifteen to twenty lines each.</p>
-
-  <p class="prose">One wrinkle was specific to Llama. It computes attention-masking indices at construction time over the <em>full</em> layer list, and those indices become invalid the moment pipelining truncates that list to a single rank's share. Building the masks lazily from the rank's actual layers fixed it, with a fallback for a rank that happens to own none of one mask type.</p>
-
-  <p class="prose">Verified on smaller models of each family first &mdash; an 8B Llama and a 30B Qwen3 &mdash; both producing real completions with memory genuinely divided three ways before committing to the 123GB download.</p>
-
-  <p class="prose">Upstream has since added pipeline parallelism for Qwen3-MoE independently, so that half of the work is now in the library for anyone on a current version &mdash; including this cluster, which runs upstream's implementation now rather than mine. Retiring my own patch in favour of it is the right outcome, and also the useful data point: the gap was small enough that someone else closed it within weeks. Treat &ldquo;the library does not do this yet&rdquo; as a claim with a short shelf life, and check before you start writing.</p>
-
-  <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">Two: uneven tensor-parallel sharding</h3>
-
-  <p class="prose">The more interesting one, and a much larger unlock: it removes the exact-divisibility requirement from tensor parallelism entirely, which applies to every architecture that already supports it rather than to one model family.</p>
-
-  <p class="prose">The question worth answering first was whether the constraint was real or merely assumed. Reading the source settled it: the only collective operation in the tensor-parallel forward pass sums a per-rank result whose shape is already uniform regardless of how unevenly the input was split. The divisibility check was a simplifying assumption in Python, not a requirement of the underlying collectives. (I confirmed separately, by experiment, that a <em>different</em> collective does require uniform shapes &mdash; but that one is only used in pipeline mode, so it was not in the way.)</p>
-
-  <p class="prose">The core is a helper that distributes a dimension across ranks with the remainder spread over the first few, expressed in units of the quantization group size so no rank ever receives a fragment of a group:</p>
-
-  <p class="code__label">Remainder-aware splitting, in blocks</p>
-  <div class="code"><span class="c"># dim expressed in whole quantization blocks, so every rank's</span>
-<span class="c"># slice stays a legal multiple of group_size</span>
-blocks       = dim // block
-base, extra  = divmod(blocks, N)
-
-<span class="c"># the first `extra` ranks each take one additional block</span>
-sizes = [(base + 1 if r &lt; extra else base) * block
-         for r in range(N)]
-
-<span class="c"># reduces to the old even split when dim % (N * block) == 0</span></div>
-
-  <p class="prose" style="margin-top: 28px;">The genuinely hard part was quantized weights. A quantized layer is not one array but three &mdash; the packed weights, the scales, and the biases &mdash; and they have <em>different</em> axis lengths, because the weights are packed by bit width while the scales and biases are packed by group size. Splitting each of the three independently at what looks like the same position produces shards that silently do not correspond to each other. The fix scales the split boundaries by the exact integer ratio between each array's real axis length and the logical dimension, so all three are cut at matching logical positions.</p>
-
-  <p class="prose">There was one more layer to it. Grouped-query attention models share each key-value head across several query heads, so splitting the two independently can leave a rank with a ratio that does not work. The model-side fix distributes whole key-value head <em>groups</em> across ranks, then derives the query and output projection sizes from that grouping &mdash; with the output projection's split forced to match the query projection's exactly, since they partition the same dimension on either side of the local computation.</p>
-
-  <div class="endnote">
-    <div class="endnote__label">Verified, and its limits</div>
-    <div class="endnote__body">Confirmed on <span class="tok">Qwen2.5-72B-Instruct-4bit</span> &mdash; 64 heads, 8 key-value heads, hidden size 8192, intermediate 29568, none of which divide by three. It could not run distributed on this cluster at all before the patch. Afterwards it launched with no errors and produced correct answers, with memory at 14 / 14 / 13GB across the nodes. The grouped-query fix is currently applied to one model file only; every other architecture would need the same treatment individually before uneven tensor parallelism works there.</div>
-  </div>
-</div>
-
-<!-- ============ 08 RESULTS ============ -->
-
-<div class="section wrap">
-  <div class="section__head section__head--spread">
-    <div style="display: flex; align-items: baseline; gap: 20px;">
-      <span class="section__num">07</span><h2 class="section__label">What runs, and how fast</h2>
-    </div>
-    <div class="section__note">Measured on the cluster &middot; blanks left blank</div>
-  </div>
-
-  <div class="dtable">
-    <div class="dtable__scroll">
-
-      <div class="drow drow--head">
-        <div class="dth">Model</div>
-        <div class="dth">Disk</div>
-        <div class="dth">Strategy</div>
-        <div class="dth">Memory per node</div>
-        <div class="dth">Throughput</div>
-      </div>
-
-      <div class="drow">
-        <div class="dname">Meta-Llama-3.1-8B-Instruct<small>8B dense &middot; 4-bit</small></div>
-        <div class="dcell dcell--num">4.2GB</div>
-        <div class="dcell">Pipeline<span class="dpatch">our patch</span></div>
-        <div class="dcell">2.1 / 2.2 / 2.1GB</div>
-        <div class="dcell dcell--num">~62.5 tok/s</div>
-      </div>
-
-      <div class="drow">
-        <div class="dname">DeepSeek-V2-Lite-Chat<small>16B MoE &middot; 2.4B active &middot; 4-bit</small></div>
-        <div class="dcell dcell--num">8.2GB</div>
-        <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-        <div class="dcell">3.4 / 3.4 / 3.1GB</div>
-        <div class="dcell dcell--num">~62.5 tok/s</div>
-      </div>
-
-      <div class="drow">
-        <div class="dname">Qwen3-30B-A3B<small>30B MoE &middot; 4-bit &middot; reasoning</small></div>
-        <div class="dcell dcell--num">17GB</div>
-        <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-        <div class="dcell">6.1 / 6.1 / 6.1GB</div>
-        <div class="dcell dcell--num">~50 tok/s</div>
-      </div>
-
-      <div class="drow">
-        <div class="dname">Qwen2.5-72B-Instruct<small>72B dense &middot; 4-bit &middot; divides by neither 3 nor 4</small></div>
-        <div class="dcell dcell--num">41GB</div>
-        <div class="dcell">Tensor<span class="dpatch">uneven patch</span></div>
-        <div class="dcell">14 / 14 / 13GB</div>
-        <div class="dcell dcell--num">~8.3 tok/s</div>
-      </div>
-
-      <div class="drow">
-        <div class="dname">Qwen3-Coder-Next<small>4-bit &middot; no pipeline or shard support &mdash; single node</small></div>
-        <div class="dcell dcell--num">42GB</div>
-        <div class="dcell">Standalone<br><span class="dcell--none">one node</span></div>
-        <div class="dcell">42GB on one node</div>
-        <div class="dcell dcell--num">~35.7 tok/s</div>
-      </div>
-
-      <div class="drow">
-        <div class="dname">GLM-4.5-Air<small>106B MoE &middot; 4-bit &middot; reasoning</small></div>
-        <div class="dcell dcell--num">56GB</div>
-        <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-        <div class="dcell">18 / 19 / 18GB</div>
-        <div class="dcell dcell--num">~20.8 tok/s</div>
-      </div>
-
-      <div class="drow drow--feature">
-        <div class="dname">Qwen3-235B-A22B-Instruct-2507<small>235B MoE &middot; 22B active &middot; 4-bit &middot; the target</small></div>
-        <div class="dcell dcell--num">123GB</div>
-        <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-        <div class="dcell">40 / 41 / 41GB</div>
-        <div class="dcell dcell--num">~12.6 tok/s</div>
-      </div>
-
-      <div class="drow drow--last">
-        <div class="dname">GLM-4.6<small>3-bit &middot; reasoning &middot; largest footprint tested</small></div>
-        <div class="dcell dcell--num">144GB</div>
-        <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-        <div class="dcell">49 / 51 / 45GB</div>
-        <div class="dcell dcell--num">~8.1 tok/s</div>
-      </div>
-
-    </div>
-
-    <p class="dtable__note">Measured in a single sweep so the numbers are comparable: one roughly 250-token completion per model, timed end to end over the API, with memory read from <span class="tok">top</span> rather than <span class="tok">ps</span>. The three reasoning models spend part of that budget on hidden thinking tokens before the visible answer, and those tokens are counted &mdash; this is real throughput, not throughput adjusted to flatter it. The patch labels say what was required at the time the work was done; upstream has since absorbed the Qwen3-MoE pipeline support, so most of these now run on the library's own code rather than mine.</p>
-  </div>
-
-  <p class="prose" style="margin-top: 40px;">The 235B row is the one the project was for. 40 + 41 + 41 comes to 122GB against a model that occupies 123GB on disk &mdash; which is the actual proof that it split three ways rather than quietly replicating onto each node. Replication would have shown roughly 123GB on every machine, and would not have fit on any of them. GLM-4.6 pushes that further: 145GB spread across three machines that hold 64GB each, which is simply not a thing any one of them can do.</p>
-
-  <p class="prose">The strategy column is worth reading against that, though it has moved since the work was done. When I started, most of these could not be distributed across three nodes at all; today five of the eight run on stock MLX, because upstream absorbed the Qwen3-MoE pipeline support in the meantime. That is the honest current picture, and it is a better outcome than the one where my patch stays necessary.</p>
-
-  <p class="prose">Two rows still depend on local changes, and they are the two that make the point. <span class="tok">Qwen2.5-72B</span> fails divisibility by three on its head counts, hidden size and intermediate size alike, and runs in tensor-parallel mode anyway &mdash; the constraint that supposedly rules it out was removed rather than worked around. Llama-3.1-8B needs pipeline support that <span class="tok">llama.py</span> still lacks upstream. Neither is a model that happened to fit. That is the difference between three nodes being a limitation and three nodes being a starting point.</p>
-
-  <p class="prose">The throughput column is the honest headline, and it falls off roughly with size: about 62 tokens per second for the small models, 50 at 30B, 21 at 106B, and single digits at the top end. That is the cost of moving every token around the ring, and it is not a bug waiting to be tuned away.</p>
-
-  <p class="prose">The Qwen3-Coder-Next row is the useful control, because it is the one model here that is <em>not</em> distributed. It has no pipeline or sharding support upstream and it did not need any &mdash; 42GB fits one node with room to spare, so it runs on a single machine at about 36 tokens per second. Set that against GLM-4.6, three and a half times the size, spread over all three nodes, at 8. The cluster is not a faster machine. It is a machine that can hold things no single node here can hold, and you pay for that in latency on every token.</p>
-
-  <p class="prose">Which is worth being blunt about if you are deciding whether to build one: if every model you care about fits on one box, buy the bigger box. This only pays off for the models that do not fit, and it pays off in capability rather than speed.</p>
-</div>
-
-<!-- ============ CLOSING ============ -->
-
-<div class="section wrap">
-  <div class="slab">
-    <div class="slab__kicker">What I would tell someone starting</div>
-    <div class="slab__rule">Read the source before you buy hardware. Test with the real binary. Re-detect, never remember.</div>
-    <div class="slab__cols">
-      <p>The constraint that shaped this project turned out not to be a constraint. Three nodes looked like the wrong number for months, and the fix was framed everywhere as buying a fourth machine. It was about 400 lines of Python standing in for a limit the hardware never had. Check whether the wall you have hit is made of silicon or of someone's simplifying assumption &mdash; the second kind you can move.</p>
-      <p>The debugging lesson was sharper. Twice I trusted a diagnostic that measured something adjacent to what I cared about &mdash; a clean ping for a blocked process, a GPU timeout for a networking fault &mdash; and both times it cost hours. Reproduce failures with the exact component under suspicion.</p>
-      <p>Machine state is not what your notes say it is. macOS renumbers Thunderbolt interfaces across reboots, and reapplying a saved mapping produced a cluster that passed every health check while the one operation I needed hung silently.</p>
-      <p>And be clear about what you are buying. This is capacity, not speed &mdash; the ability to run something on hardware you already own that would not otherwise fit anywhere. Judged as a fast chat machine it is a bad one. Judged as 192GB of pooled memory, it does exactly what it was meant to.</p>
-    </div>
-  </div>
-</div>
-
-</article>
+  </article>
 
 </body>
+
 </html>
