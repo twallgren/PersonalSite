@@ -5,10 +5,15 @@ Static homepage for the apex domain. GitHub Pages, no build step.
 ## Structure
 
 ```
-index.html   the homepage
-style.css    design system (shared visual language with the FieldGuide repo)
-CNAME        taylorwallgren.com
+index.html                    the homepage
+distributed-ai-cluster.html   write-up: 3-node MLX cluster on M1 Max Macs
+style.css                     design system (shared visual language with the FieldGuide repo)
+CNAME                         taylorwallgren.com
 ```
+
+Article pages reuse the components in the `ARTICLE PAGES` block at the bottom
+of `style.css`, ported from the FieldGuide stylesheet so both properties keep
+reading as one body of work.
 
 ## Contact
 

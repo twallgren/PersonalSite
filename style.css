@@ -11,13 +11,19 @@
   --hairline-2: #c8c4bc;
   --wash:       #ece8e1;
 
+  --faint:      #b5b0a7;
+
   --pos:        #1f6497;
+  --pos-tint:   #e4edf5;
   --neg:        #9c5f1a;
+  --neg-tint:   #f4ebdd;
 
   --ink-inv:    #f6f4f0;
   --muted-inv:  #9c9891;
   --body-inv:   #cfcac2;
   --rule-inv:   #4a4741;
+  --pos-inv:    #7fb4dd;
+  --neg-inv:    #d9a86a;
 
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
@@ -179,4 +185,321 @@ ul { padding: 0; list-style: none; }
   .contact__line { font-size: 22px; max-width: none; }
   .contact__links { gap: 16px; }
   .masthead__name { font-size: 22px; }
+}
+
+/* ============================================================
+   ARTICLE PAGES
+   Components for long-form write-ups (distributed-ai-cluster.html).
+   Ported from the Field Guide stylesheet so the two properties keep
+   reading as one body of work; .code and .dtable are new here, built
+   to the same rules — hard edges, no radii, no shadows.
+   Nothing above this line is modified.
+   ============================================================ */
+
+/* ---------- compact masthead + nav ---------- */
+
+.masthead--compact { padding-top: 20px; padding-bottom: 18px; align-items: center; }
+.masthead--compact .masthead__name {
+  font-size: 16px; color: var(--ink); border-bottom: 0; display: inline-block;
+}
+.masthead--compact .masthead__name:hover { color: var(--neg); }
+.nav {
+  display: flex; gap: 28px; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; flex-wrap: wrap;
+}
+.nav a { color: var(--ink); border-bottom: 0; }
+.nav a:hover { color: var(--neg); }
+
+/* ---------- prose ---------- */
+
+.lede { font-family: var(--serif); font-size: 19px; line-height: 1.62;
+        max-width: 62ch; text-wrap: pretty; }
+.lede + .lede { margin-top: 20px; }
+.prose { font-family: var(--serif); font-size: 19px; line-height: 1.62;
+         max-width: 74ch; text-wrap: pretty; }
+.prose + .prose { margin-top: 18px; }
+.prose ul { margin-top: 14px; }
+.prose li { margin-bottom: 10px; padding-left: 18px; position: relative; }
+.prose li::before { content: "—"; position: absolute; left: 0; color: var(--muted); }
+.tok { font-family: var(--mono); font-weight: 600; font-size: 0.92em; }
+
+/* Long identifiers (API symbols, error constants) are single unbreakable
+   words wide enough to push the whole page sideways on a phone. Break them
+   only when they genuinely cannot fit. Code blocks are exempt — they scroll
+   instead, because breaking a line there would change its meaning. */
+.lede, .prose, .standfirst, .baseline__text, .guide__rule, .guide__body,
+.history__what, .history__why, .history__note, .plog__claim, .plog__body,
+.when__body, .endnote__body, .slab__cols p, .dname, .dcell, .dtable__note {
+  overflow-wrap: break-word;
+}
+
+/* A grid track's automatic minimum is its content's min-content width, and
+   overflow-wrap does not lower that — so one long word still widens the
+   column and pushes the page sideways. min-width:0 lets the track shrink,
+   at which point the rule above is free to wrap. */
+.post-grid > *, .baseline > *, .guide__item > *, .history__entry > *,
+.plog__entry > *, .endnote > *, .slab__cols > *, .when__col {
+  min-width: 0;
+}
+
+/* ---------- post head ---------- */
+
+.post-head { padding-top: 56px; }
+.post-kicker { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+.post-kicker__bar { display: flex; height: 12px; width: 56px; }
+.post-kicker__bar > i { flex-grow: 1; background: var(--ink); }
+.post-kicker__status { font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+.post-kicker__sep { width: 1px; height: 18px; background: var(--hairline-2); }
+.post-kicker__meta {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+.post-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 32px; }
+.post-title {
+  font-size: 68px; font-weight: 700; line-height: 1; letter-spacing: -0.025em;
+  margin-bottom: 30px; text-wrap: balance;
+}
+.standfirst { font-family: var(--serif); font-size: 22px; line-height: 1.5; max-width: 54ch; text-wrap: pretty; }
+
+.stats { border: 2px solid var(--ink); align-self: start; }
+.stat { padding: 18px 20px; border-bottom: 1px solid var(--hairline); }
+.stat:last-child { border-bottom: 0; }
+.stat__num { font-size: 34px; font-weight: 700; line-height: 1; }
+.stat__label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); margin-top: 6px;
+}
+
+/* ---------- section head variants ---------- */
+
+.section__head--spread { justify-content: space-between; }
+.section__note {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ---------- dark slab ---------- */
+
+.slab { background: var(--ink); color: var(--ink-inv); padding: 44px 48px; }
+.slab__kicker {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted-inv);
+}
+.slab__rule {
+  font-size: 44px; font-weight: 700; line-height: 1.08;
+  letter-spacing: -0.01em; margin: 20px 0 28px;
+}
+.slab__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 900px; }
+.slab__cols p { font-family: var(--serif); font-size: 17px; line-height: 1.6; }
+
+/* ---------- baseline (framing statement) ---------- */
+
+.baseline {
+  display: grid; grid-template-columns: 180px 1fr; gap: 40px; align-items: start;
+  background: var(--ink); color: var(--ink-inv); padding: 36px 44px;
+}
+.baseline__label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted-inv); padding-top: 6px;
+}
+.baseline__text { font-family: var(--serif); font-size: 22px; line-height: 1.5; }
+
+/* ---------- two-column verdict ---------- */
+
+.when { border: 3px solid var(--ink); display: grid; grid-template-columns: 1fr 1fr; }
+.when__col { padding: 32px 34px; display: flex; flex-direction: column; gap: 12px; }
+.when__col:first-child { border-right: 3px solid var(--ink); }
+.when__kicker { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+.when__kicker--pos { color: var(--pos); }
+.when__kicker--neg { color: var(--neg); }
+.when__title { font-size: 28px; font-weight: 700; line-height: 1.12; letter-spacing: -0.01em; }
+.when__body { font-family: var(--serif); font-size: 17px; line-height: 1.55; }
+
+/* ---------- meta row ---------- */
+
+.meta-row {
+  display: flex; gap: 40px; align-items: baseline; flex-wrap: wrap;
+  padding-top: 22px; margin-top: 22px; border-top: 1px solid var(--hairline);
+}
+.meta { display: flex; align-items: baseline; gap: 12px; }
+.meta__k {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+.meta__v { font-size: 15px; font-weight: 700; }
+.meta__x { font-size: 13px; color: var(--muted); }
+
+/* ---------- failure log ---------- */
+
+.history { border-top: 2px solid var(--ink); }
+.history__entry {
+  display: grid; grid-template-columns: 180px 1fr; gap: 36px;
+  padding: 24px 0; border-bottom: 1px solid var(--hairline);
+}
+.history__date {
+  font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); padding-top: 2px;
+}
+.history__what { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+.history__why { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin: 0; }
+.history__why + .history__why { margin-top: 12px; }
+.history__note {
+  padding-top: 16px; font-family: var(--serif); font-size: 15px;
+  line-height: 1.6; color: var(--muted); max-width: 74ch; margin: 0;
+}
+
+/* ---------- practical guide list ---------- */
+/* Categorised advice: left rail names the area, right carries the rule. */
+
+.guide { border-top: 2px solid var(--ink); margin-top: 36px; }
+.guide__item {
+  display: grid; grid-template-columns: 180px 1fr; gap: 36px;
+  padding: 24px 0; border-bottom: 1px solid var(--hairline);
+}
+.guide__cat {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); padding-top: 4px;
+}
+.guide__rule { font-size: 18px; font-weight: 700; line-height: 1.35; margin-bottom: 12px; }
+.guide__body { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin: 0; }
+
+/* ---------- retraction log (dark) ---------- */
+
+.plog { background: var(--ink); color: var(--ink-inv); padding: 40px 44px 44px; }
+.plog__head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 24px;
+  padding-bottom: 22px; margin-bottom: 32px;
+  border-bottom: 1px solid var(--rule-inv); flex-wrap: wrap;
+}
+.plog__title { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.plog__blurb {
+  font-family: var(--serif); font-size: 17px; line-height: 1.5;
+  color: var(--body-inv); max-width: 58ch; text-align: right;
+}
+.plog__entry {
+  display: grid; grid-template-columns: 210px 1fr; gap: 36px;
+  padding-bottom: 30px; margin-bottom: 30px; border-bottom: 1px solid var(--rule-inv);
+}
+.plog__entry:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.plog__meta { display: flex; flex-direction: column; gap: 12px; }
+.plog__date { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: var(--muted-inv); }
+.plog__claim { font-family: var(--serif); font-size: 19px; font-weight: 600; line-height: 1.4; margin-bottom: 14px; }
+.plog__body {
+  font-family: var(--serif); font-size: 18px; line-height: 1.6;
+  color: #e6e2db; max-width: 74ch; text-wrap: pretty;
+}
+.plog__body + .plog__body { margin-top: 14px; }
+.plog__body .tok { color: var(--ink-inv); }
+.tag {
+  display: inline-flex; align-self: flex-start; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 10px;
+}
+.tag--retracted { background: var(--neg-inv); color: var(--ink); }
+.tag--held { border: 1px solid var(--pos-inv); color: var(--pos-inv); padding: 4px 10px; }
+
+/* ---------- endnote ---------- */
+
+.endnote {
+  border-top: 2px solid var(--ink); padding-top: 22px; margin-top: 40px;
+  display: grid; grid-template-columns: 210px 1fr; gap: 36px;
+}
+.endnote__label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--muted);
+}
+.endnote__body {
+  font-family: var(--serif); font-size: 17px; line-height: 1.6;
+  color: #4a4741; max-width: 78ch;
+}
+.endnote__body .tok { color: var(--ink); }
+
+/* ---------- code ---------- */
+/* New here — neither property had a code block before. Same rules as
+   everything else: hard edges, no radius, mono. The heavy left rule marks
+   it as machine text without boxing it in. */
+
+.code {
+  font-family: var(--mono); font-size: 13px; line-height: 1.65;
+  background: var(--wash); border-left: 3px solid var(--ink);
+  padding: 20px 24px; margin-top: 24px;
+  overflow-x: auto; white-space: pre; tab-size: 2;
+}
+.code__label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); margin-top: 28px; margin-bottom: 0;
+}
+.code__label + .code { margin-top: 10px; }
+.code .c { color: var(--muted); }
+
+/* ---------- data table ---------- */
+/* New here — mirrors the Field Guide index grid rather than a <table>,
+   so rows share the same rule weights as everything else. */
+
+.dtable { margin-top: 32px; }
+.dtable__scroll { overflow-x: auto; }
+.drow {
+  display: grid; grid-template-columns: 2.2fr 0.7fr 1.3fr 1.2fr 0.9fr;
+  gap: 20px; align-items: baseline; padding: 16px 0;
+  border-bottom: 1px solid var(--hairline); min-width: 720px;
+}
+.drow--head { align-items: end; padding: 0 0 10px; border-bottom: 2px solid var(--ink); }
+.drow--last { border-bottom: 2px solid var(--ink); }
+.drow--feature { background: var(--wash); }
+.dth {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+.dname { font-size: 15px; font-weight: 600; line-height: 1.4; }
+.dname small {
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--muted); margin-top: 5px; letter-spacing: 0.04em;
+}
+.drow--feature .dname { font-weight: 700; }
+.dcell { font-size: 14px; font-weight: 500; line-height: 1.45; }
+.dcell--num { font-weight: 700; }
+.dcell--none { color: var(--faint); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.dpatch {
+  display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--neg); border: 1px solid var(--neg);
+  padding: 2px 6px; margin-top: 6px;
+}
+.dtable__note {
+  padding-top: 18px; font-family: var(--serif); font-size: 16px;
+  line-height: 1.6; color: var(--muted); max-width: 74ch;
+}
+
+/* ---------- article responsive ---------- */
+
+@media (max-width: 1100px) {
+  .post-grid { grid-template-columns: 1fr; }
+  .post-title { font-size: 52px; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { border-bottom: 1px solid var(--hairline); }
+  .stat:nth-child(odd) { border-right: 1px solid var(--hairline); }
+}
+
+@media (max-width: 720px) {
+  .post-head { padding-top: 40px; }
+  .post-title { font-size: 34px; }
+  .standfirst { font-size: 19px; }
+  .lede, .prose { font-size: 17px; }
+  .stats { grid-template-columns: 1fr; }
+  .stat:nth-child(odd) { border-right: 0; }
+  .slab, .plog { padding: 28px 24px; }
+  .slab__rule { font-size: 26px; }
+  .slab__cols { grid-template-columns: 1fr; gap: 24px; }
+  .baseline, .when, .plog__entry, .endnote, .history__entry, .guide__item {
+    grid-template-columns: 1fr; gap: 16px;
+  }
+  .baseline { padding: 24px; }
+  .baseline__text { font-size: 19px; }
+  .when__col { padding: 24px; }
+  .when__col:first-child { border-right: 0; border-bottom: 3px solid var(--ink); }
+  .when__title { font-size: 22px; }
+  .plog__head { flex-direction: column; }
+  .plog__blurb { text-align: left; }
+  .plog__title { font-size: 22px; }
+  .nav { gap: 16px; font-size: 11px; }
+  .meta-row { gap: 20px; }
+  .code { font-size: 12px; padding: 16px 18px; }
 }
