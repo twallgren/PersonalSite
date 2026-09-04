@@ -503,3 +503,82 @@ ul { padding: 0; list-style: none; }
   .meta-row { gap: 20px; }
   .code { font-size: 12px; padding: 16px 18px; }
 }
+
+/* ============================================================
+   DIGESTIBILITY LAYER
+   Three components that let a long page be skimmed without
+   deleting anything: a section index, a scannable rule list
+   that links into the full advice, and collapsible entries.
+   ============================================================ */
+
+/* ---------- section index ---------- */
+
+.toc { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); margin-top: 52px; }
+.toc__row {
+  display: grid; grid-template-columns: 40px 1fr auto; gap: 20px;
+  align-items: baseline; padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.toc__row:last-child { border-bottom: 0; }
+.toc__row > * { min-width: 0; }
+.toc__num {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: var(--faint);
+}
+.toc__link {
+  font-size: 16px; font-weight: 600; color: var(--ink);
+  border-bottom: 1px solid transparent; justify-self: start;
+}
+.toc__link:hover { color: var(--pos); border-bottom-color: var(--pos); }
+.toc__meta {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); text-align: right;
+}
+
+/* ---------- scannable rule list ---------- */
+/* The short form of the guide. Each row links to its full entry. */
+
+.rules { border-top: 2px solid var(--ink); margin-top: 32px; }
+.rules__row {
+  display: grid; grid-template-columns: 180px 1fr; gap: 36px;
+  padding: 14px 0; border-bottom: 1px solid var(--hairline);
+  align-items: baseline; color: var(--ink);
+}
+.rules__row > * { min-width: 0; }
+.rules__row:hover { background: var(--wash); }
+.rules__row:hover .rules__text { color: var(--pos); }
+.rules__cat {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+.rules__text { font-size: 17px; font-weight: 600; line-height: 1.4; overflow-wrap: break-word; }
+
+/* ---------- collapsible entry ---------- */
+/* Native <details>, so it works with no JS and stays findable
+   by in-page search in browsers that expand on find. The
+   default disclosure triangle is replaced by a +/- in the
+   page's own idiom. */
+
+.fold { min-width: 0; }
+.fold > summary {
+  display: flex; align-items: baseline; gap: 16px; cursor: pointer;
+  list-style: none; margin-bottom: 0;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after {
+  content: "+"; margin-left: auto; flex: none;
+  font-family: var(--mono); font-size: 20px; font-weight: 400;
+  line-height: 1; color: var(--faint);
+}
+.fold[open] > summary::after { content: "\2212"; }
+.fold > summary:hover, .fold > summary:hover::after { color: var(--pos); }
+.fold > summary:focus-visible { outline: 2px solid var(--pos); outline-offset: 4px; }
+.fold[open] > summary { margin-bottom: 14px; }
+.fold > summary > span { flex: 1 1 auto; min-width: 0; }
+
+@media (max-width: 720px) {
+  /* The 180px left rail costs more than it gives at this width. */
+  .rules__row { grid-template-columns: 1fr; gap: 6px; padding: 16px 0; }
+  .toc__row { grid-template-columns: 28px 1fr; gap: 14px; }
+  .toc__meta { grid-column: 2; text-align: left; margin-top: 3px; }
+  .fold > summary { gap: 12px; }
+}
