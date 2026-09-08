@@ -578,6 +578,11 @@
               The bug was found by code review of an unrelated change, not by any output ever looking wrong &mdash; and
               the fix was verified by brute-forcing the partition arithmetic across thousands of layer and rank counts
               rather than by reading more completions.</p>
+            <p class="plog__body">Upstream found and fixed the same bug independently, at almost the same time, in a
+              change neither of us knew the other was writing. Two people looking at that file within weeks of each
+              other after it had been quietly wrong for months is the version-lag lesson from further up this page
+              arriving a second time, in a form I did not expect: it is not only that the fix you need may already
+              exist, it is that the bug you just found may already be someone else's open pull request.</p>
             <p class="plog__body">The uncomfortable part is that &ldquo;it produced a correct answer&rdquo; was doing
               much less work as evidence than I thought. A system that degrades into plausible output has no failure
               signal to notice, so the only honest verification is the arithmetic, checked directly.</p>
@@ -770,6 +775,31 @@
           divide by three. Two are not: there is no dense Qwen3 model on this cluster to test against, and DeepSeek-V3
           at roughly 671B parameters exceeds the pooled memory regardless.</div>
       </div>
+
+      <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">Where this ended up</h3>
+
+      <p class="prose">All of it is now open against the upstream projects, in three pieces plus the core change:</p>
+
+      <div class="meta-row meta-row--stack">
+        <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx/pull/4465">mlx #4465</a></span><span
+            class="meta__v">Uneven sharding in the distributed linear layers</span><span class="meta__x">the core
+            change</span></div>
+        <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1863">mlx-lm
+              #1863</a></span><span class="meta__v">The model-side sharding, six more architectures</span><span
+            class="meta__x">blocked on #4465</span></div>
+        <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1862">mlx-lm
+              #1862</a></span><span class="meta__v">Pipeline support for Qwen2 and Qwen3-Next</span><span
+            class="meta__x">independent</span></div>
+        <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1861">mlx-lm
+              #1861</a></span><span class="meta__v">A checkpoint-loading fix, and DeepSeek-V3.2 onto the shared pipeline
+            base</span><span class="meta__x">independent</span></div>
+      </div>
+
+      <p class="prose" style="margin-top: 28px;">Splitting them along those lines rather than by model family was
+        deliberate: one is a pure bug fix against code that already ships, one is new capability with no dependencies,
+        and one cannot merge until the core change does. Bundling them would have mixed &ldquo;urgent&rdquo; with
+        &ldquo;blocked&rdquo; in a single review. The fourth piece, the layer-drop fix, is not on this list &mdash;
+        upstream&rsquo;s own version of it merged first, so mine was dropped rather than argued for.</p>
     </div>
 
     <!-- ============ 08 RESULTS ============ -->

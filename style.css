@@ -600,3 +600,18 @@ ul { padding: 0; list-style: none; }
 .vcell--win { color: var(--pos); }
 .vcell--na { font-weight: 500; color: var(--faint); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
 .vcell--ratio { font-weight: 500; color: var(--muted); font-size: 13px; }
+
+/* Stacked variant of .meta-row: one row per item, columns aligned. */
+.meta-row--stack { flex-direction: column; gap: 0; align-items: stretch; }
+.meta-row--stack .meta {
+  display: grid; grid-template-columns: 140px 1fr auto; gap: 20px;
+  padding: 12px 0; border-bottom: 1px solid var(--hairline);
+}
+.meta-row--stack .meta:last-child { border-bottom: 0; }
+.meta-row--stack .meta > * { min-width: 0; }
+.meta-row--stack .meta__v { font-weight: 600; }
+.meta-row--stack .meta__x { text-align: right; }
+@media (max-width: 720px) {
+  .meta-row--stack .meta { grid-template-columns: 1fr; gap: 4px; }
+  .meta-row--stack .meta__x { text-align: left; }
+}
