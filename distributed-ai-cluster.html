@@ -66,7 +66,7 @@
             <div class="stat__label">Parameters, 4-bit</div>
           </div>
           <div class="stat">
-            <div class="stat__num">12.6</div>
+            <div class="stat__num">6.0</div>
             <div class="stat__label">Tokens per second, 235B</div>
           </div>
         </aside>
@@ -93,11 +93,11 @@
         <div class="toc__row">
           <span class="toc__num">04</span>
           <a class="toc__link" href="#broke">What broke</a>
-          <span class="toc__meta">11 failures</span>
+          <span class="toc__meta">12 failures</span>
         </div>
         <div class="toc__row">
           <span class="toc__num">&mdash;</span>
-          <a class="toc__link" href="#wrong">Two conclusions I got wrong</a>
+          <a class="toc__link" href="#wrong">Three conclusions I got wrong</a>
           <span class="toc__meta">Retractions</span>
         </div>
         <div class="toc__row">
@@ -283,7 +283,7 @@
           <span class="section__num">04</span>
           <h2 class="section__label">What broke</h2>
         </div>
-        <div class="section__note">Eleven failures &middot; expand any one</div>
+        <div class="section__note">Twelve failures &middot; expand any one</div>
       </div>
 
       <p class="prose">Almost none of these were interesting distributed-systems problems. They were operating-system
@@ -454,6 +454,24 @@
         </div>
 
         <div class="history__entry">
+          <div class="history__date">Modes</div>
+          <details class="fold">
+            <summary class="history__what"><span>An unsupported mode that hung instead of failing</span></summary>
+            <p class="history__why">Forcing pipeline mode on a model whose architecture implements only sharding does
+              not produce an error. It hangs, indefinitely, exactly like the memory fault above. The model loads lazily
+              on the first request, so the &ldquo;this architecture does not support pipelining&rdquo; exception is
+              raised on a background worker thread that never signals the HTTP layer &mdash; the request simply waits
+              forever for a response nobody is going to send.</p>
+            <p class="history__note">Two failures with identical symptoms and completely different fixes is worth a
+              cheap discriminator. This one is deterministic and memory stays flat at a few gigabytes; the leak shows
+              forty to fifty. Checking wired memory tells them apart in seconds, which matters because the recovery for
+              one is a reboot and for the other is switching mode. The underlying gap has since been closed &mdash; that
+              architecture now has a pipeline implementation &mdash; but a mode an architecture does not implement
+              should still fail loudly rather than wait forever.</p>
+          </details>
+        </div>
+
+        <div class="history__entry">
           <div class="history__date">Operating</div>
           <details class="fold">
             <summary class="history__what"><span>Memory that no process was holding</span></summary>
@@ -485,8 +503,8 @@
     <div id="wrong" class="section wrap">
       <div class="plog">
         <div class="plog__head">
-          <h2 class="plog__title">Two conclusions I got wrong</h2>
-          <div class="plog__blurb">Both were reached with real evidence and written down as settled. Both were wrong.
+          <h2 class="plog__title">Three conclusions I got wrong</h2>
+          <div class="plog__blurb">Each was reached with real evidence and written down as settled. Each was wrong.
             Keeping them on the record, because the reasoning that produced them is the interesting part.</div>
         </div>
 
@@ -503,9 +521,9 @@
               working, just slow. I wrote it up as the unavoidable cost of pipeline parallelism over TCP without RDMA.
             </p>
             <p class="plog__body">That measurement was taken on a cluster in a corrupted state, and I generalised from
-              it. The same model, correctly configured, now runs at about 20.8 tokens per second &mdash; so those 300
-              tokens take roughly fourteen seconds rather than twelve minutes. Not a refinement of the original figure:
-              about fifty times off it.</p>
+              it. The same model, correctly configured, now runs at about 18 tokens per second &mdash; so those 300
+              tokens take roughly seventeen seconds rather than twelve minutes. Not a refinement of the original figure:
+              more than forty times off it.</p>
             <p class="plog__body">Distributed inference here <em>is</em> slower than a single machine, and the largest
               models do run at single-digit tokens per second. But that is a property of moving every token around a TCP
               ring, not the catastrophe one broken measurement implied. The lesson is narrower and more useful than
@@ -537,6 +555,34 @@
               wrong path. Only a reboot cleared it.</p>
           </div>
         </div>
+
+        <div class="plog__entry">
+          <div class="plog__meta">
+            <div class="plog__date">Retracted</div>
+            <div class="tag tag--retracted">Wrong</div>
+          </div>
+          <div>
+            <div class="plog__claim">&ldquo;These models are running correctly.&rdquo;</div>
+            <p class="plog__body">Every pipeline result on this page was checked the same way: launch the model, send a
+              real prompt, read a coherent answer, confirm the memory split three ways. All of that passed. The models
+              were not running correctly.</p>
+            <p class="plog__body">The shared function that assigns layers to ranks &mdash; used by every
+              pipeline-capable architecture, not by anything I wrote &mdash; computed its partition by multiplying a
+              per-rank size instead of accumulating a running offset. Whenever the layer count did not divide evenly by
+              the node count, exactly one layer was assigned to nobody. It was loaded into memory and then executed by
+              no rank at all. On this cluster that hit five of the eight models: 32 layers, 80, 46, 94 and 92, none
+              divisible by three. The two that were ever correct, 27 layers and 48, were correct by arithmetic accident.
+            </p>
+            <p class="plog__body">It survived months of use because a transformer with one missing middle layer still
+              writes fluent, plausible text. It passed every spot-check I ran, including ones I designed to be strict.
+              The bug was found by code review of an unrelated change, not by any output ever looking wrong &mdash; and
+              the fix was verified by brute-forcing the partition arithmetic across thousands of layer and rank counts
+              rather than by reading more completions.</p>
+            <p class="plog__body">The uncomfortable part is that &ldquo;it produced a correct answer&rdquo; was doing
+              much less work as evidence than I thought. A system that degrades into plausible output has no failure
+              signal to notice, so the only honest verification is the arithmetic, checked directly.</p>
+          </div>
+        </div>
       </div>
 
       <div class="wrap" style="padding-left: 0; padding-right: 0;">
@@ -563,12 +609,10 @@
       <p class="prose"><strong>Tensor parallelism</strong> slices individual weight matrices across nodes. It is usually
         described as the faster of the two, and on a high-bandwidth interconnect it is. That reasoning may well invert
         here: it synchronises once per <em>projection</em> rather than once per layer boundary, which is many more round
-        trips per token, and round trips are exactly what a TCP ring with no RDMA is bad at. I would not state that as a
-        finding &mdash; the only tensor-parallel model I measured is a dense 72B that activates every parameter on every
-        token, so it is doing far more compute than the sparse models it sits next to in the table, and the comparison
-        is not clean. It is a reason to measure rather than to assume the usual ordering holds on hardware like this.
-        What tensor parallelism definitely does require is that the shapes divide evenly: the number of attention heads
-        and the number of key-value heads must both be divisible by the node count.</p>
+        trips per token, and round trips are exactly what a TCP ring with no RDMA is bad at. That was a hypothesis for a
+        long time, and it is now measured &mdash; see the head-to-head below, which runs the same models both ways.
+        Tensor parallelism also requires that the shapes divide evenly: the number of attention heads and the number of
+        key-value heads must both be divisible by the node count.</p>
 
       <p class="prose"><strong>Pipeline parallelism</strong> assigns whole transformer layers to each node instead. It
         has no divisibility constraint whatsoever &mdash; leftover layers simply go to the first few ranks. The cost is
@@ -644,8 +688,8 @@
         moved onto a fork branch off upstream <span class="tok">main</span>, installed editable, so each local change is
         a commit rather than an edit and upgrading is a merge instead of a silent revert. The core sharding change is
         still a patched file inside the installed package, because that package ships compiled and building it from
-        source is a heavier commitment than it has so far been worth. It is being prepared for upstream as of this
-        writing.</p>
+        source is a heavier commitment than it has so far been worth. It is now open upstream as <a
+          href="https://github.com/ml-explore/mlx/pull/4465">MLX pull request #4465</a>.</p>
 
       <h3 class="guide__rule" style="margin-top: 40px; font-size: 22px;">One: pipeline support for two more
         architectures</h3>
@@ -719,9 +763,12 @@
         <div class="endnote__body">Confirmed on <span class="tok">Qwen2.5-72B-Instruct-4bit</span> &mdash; 64 heads, 8
           key-value heads, hidden size 8192, intermediate 29568, none of which divide by three. It could not run
           distributed on this cluster at all before the patch. Afterwards it launched with no errors and produced
-          correct answers, with memory at 14 / 14 / 13GB across the nodes. The grouped-query fix is currently applied to
-          one model file only; every other architecture would need the same treatment individually before uneven tensor
-          parallelism works there.</div>
+          correct answers, with memory at 14 / 14 / 13GB across the nodes. The pattern has since been ported to six more
+          architectures &mdash; Llama, Qwen3, Qwen3-MoE and GLM-4-MoE directly, and DeepSeek-V2 and V3 with adaptation,
+          because multi-head latent attention has no separate key-value head count and so distributes heads
+          individually rather than in groups. Four of those are confirmed live at three nodes on head counts that do not
+          divide by three. Two are not: there is no dense Qwen3 model on this cluster to test against, and DeepSeek-V3
+          at roughly 671B parameters exceeds the pooled memory regardless.</div>
       </div>
     </div>
 
@@ -751,24 +798,24 @@
             <div class="dname">Meta-Llama-3.1-8B-Instruct<small>8B dense &middot; 4-bit</small></div>
             <div class="dcell dcell--num">4.2GB</div>
             <div class="dcell">Pipeline<span class="dpatch">our patch</span></div>
-            <div class="dcell">2.1 / 2.2 / 2.1GB</div>
-            <div class="dcell dcell--num">~62.5 tok/s</div>
+            <div class="dcell">2.0 / 2.1 / 2.0GB</div>
+            <div class="dcell dcell--num">~50.9 tok/s</div>
           </div>
 
           <div class="drow">
             <div class="dname">DeepSeek-V2-Lite-Chat<small>16B MoE &middot; 2.4B active &middot; 4-bit</small></div>
             <div class="dcell dcell--num">8.2GB</div>
             <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-            <div class="dcell">3.4 / 3.4 / 3.1GB</div>
-            <div class="dcell dcell--num">~62.5 tok/s</div>
+            <div class="dcell">3.3 / 3.3 / 2.9GB</div>
+            <div class="dcell dcell--num">~74.1 tok/s</div>
           </div>
 
           <div class="drow">
             <div class="dname">Qwen3-30B-A3B<small>30B MoE &middot; 4-bit &middot; reasoning</small></div>
             <div class="dcell dcell--num">17GB</div>
             <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
-            <div class="dcell">6.1 / 6.1 / 6.1GB</div>
-            <div class="dcell dcell--num">~50 tok/s</div>
+            <div class="dcell">6.0 / 6.0 / 6.0GB</div>
+            <div class="dcell dcell--num">~51.4 tok/s</div>
           </div>
 
           <div class="drow">
@@ -777,7 +824,7 @@
             <div class="dcell dcell--num">41GB</div>
             <div class="dcell">Tensor<span class="dpatch">uneven patch</span></div>
             <div class="dcell">14 / 14 / 13GB</div>
-            <div class="dcell dcell--num">~8.3 tok/s</div>
+            <div class="dcell dcell--num">~6.4 tok/s</div>
           </div>
 
           <div class="drow">
@@ -786,7 +833,7 @@
             <div class="dcell dcell--num">42GB</div>
             <div class="dcell">Standalone<br><span class="dcell--none">one node</span></div>
             <div class="dcell">42GB on one node</div>
-            <div class="dcell dcell--num">~35.7 tok/s</div>
+            <div class="dcell dcell--num">~10.3 tok/s</div>
           </div>
 
           <div class="drow">
@@ -794,7 +841,7 @@
             <div class="dcell dcell--num">56GB</div>
             <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
             <div class="dcell">18 / 19 / 18GB</div>
-            <div class="dcell dcell--num">~20.8 tok/s</div>
+            <div class="dcell dcell--num">~18.2 tok/s</div>
           </div>
 
           <div class="drow drow--feature">
@@ -803,7 +850,7 @@
             <div class="dcell dcell--num">123GB</div>
             <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
             <div class="dcell">40 / 41 / 41GB</div>
-            <div class="dcell dcell--num">~12.6 tok/s</div>
+            <div class="dcell dcell--num">~6.0 tok/s</div>
           </div>
 
           <div class="drow drow--last">
@@ -811,14 +858,19 @@
             <div class="dcell dcell--num">144GB</div>
             <div class="dcell">Pipeline<br><span class="dcell--none">upstream</span></div>
             <div class="dcell">49 / 51 / 45GB</div>
-            <div class="dcell dcell--num">~8.1 tok/s</div>
+            <div class="dcell dcell--num">~3.9 tok/s</div>
           </div>
 
         </div>
 
-        <p class="dtable__note">Measured in a single sweep so the numbers are comparable: one roughly 250-token
-          completion per model, timed end to end over the API, with memory read from <span class="tok">top</span> rather
-          than <span class="tok">ps</span>. The three reasoning models spend part of that budget on hidden thinking
+        <p class="dtable__note">Measured in a single sweep so the numbers are comparable: one 200-token completion per
+          model from a fixed prompt, timed end to end over the API, with memory read from <span class="tok">top</span>
+          rather than <span class="tok">ps</span>. Large models vary by ten to twenty per cent between runs; the small
+          ones repeat to within a percent or two. This sweep predates the dropped-layer fix described above, so five of
+          these eight ran a layer short. The comparison table below was re-measured after the fix and every model landed
+          within the ordinary run-to-run spread &mdash; one layer out of ninety is not much compute &mdash; so these
+          hold as throughput figures. What they are not is evidence the outputs were right, which is a separate
+          question and was answered separately. The three reasoning models spend part of that budget on hidden thinking
           tokens before the visible answer, and those tokens are counted &mdash; this is real throughput, not throughput
           adjusted to flatter it. The patch labels say what was required at the time the work was done; upstream has
           since absorbed the Qwen3-MoE pipeline support, so most of these now run on the library's own code rather than
@@ -844,19 +896,109 @@
         a limitation and three nodes being a starting point.</p>
 
       <p class="prose">The throughput column is the honest headline, and the thing it does <em>not</em> track is file
-        size. Qwen2.5-72B occupies 41GB and runs at 8.3 tokens per second; Qwen3-235B is three times the size and runs
-        at 12.6. The 72B is dense, so every parameter participates in every token, while the 235B activates 22B of its
-        parameters at a time. What throughput tracks is active parameters and round trips. Hold the strategy fixed and
-        the decline is real enough &mdash; about 62 tokens per second on the small pipelined models, 50 at 30B, 21 at
-        106B, 12.6 at 235B, 8 at the top end &mdash; and that is the cost of moving every token around the ring, not a
-        bug waiting to be tuned away.</p>
+        size. Qwen2.5-72B occupies 41GB and runs at 6.4 tokens per second; Qwen3-235B is three times the size and runs
+        at essentially the same speed, 6.0. The 72B is dense, so every parameter participates in every token, while the
+        235B activates 22B of its parameters at a time &mdash; three times the weights, comparable work per token. What
+        throughput tracks is active parameters and round trips. Hold that fixed and the decline is real enough &mdash;
+        about 74 tokens per second on the smallest pipelined model, 51 at 30B, 18 at 106B, 6 at 235B, 3.9 at the top
+        end &mdash; and that is the cost of moving every token around the ring, not a bug waiting to be tuned away.</p>
 
-      <p class="prose">The Qwen3-Coder-Next row is the useful control, because it is the one model here that is
-        <em>not</em> distributed. It has no pipeline or sharding support upstream and it did not need any &mdash; 42GB
-        fits one node with room to spare, so it runs on a single machine at about 36 tokens per second. Set that against
-        GLM-4.6, three and a half times the size, spread over all three nodes, at 8. The cluster is not a faster
-        machine. It is a machine that can hold things no single node here can hold, and you pay for that in latency on
-        every token.
+      <h3 class="guide__rule" style="margin-top: 52px; font-size: 22px;">Pipeline against tensor, the same models both
+        ways</h3>
+
+      <p class="prose">The two strategies were finally measured head to head, forcing each model through both modes,
+        after the layer bug above was fixed. Pipeline wins almost everywhere, and by more than expected &mdash;
+        including on the shallow models where tensor parallelism was supposed to have the advantage.</p>
+
+      <div class="vs">
+        <div class="vs__scroll">
+
+          <div class="vrow vrow--head">
+            <div class="dth">Model</div>
+            <div class="dth">Pipeline</div>
+            <div class="dth">Tensor</div>
+            <div class="dth">Margin</div>
+          </div>
+
+          <div class="vrow">
+            <div class="vname">Llama-3.1-8B</div>
+            <div class="vcell vcell--win">50.1</div>
+            <div class="vcell">29.2</div>
+            <div class="vcell vcell--ratio">1.7&times;</div>
+          </div>
+
+          <div class="vrow">
+            <div class="vname">DeepSeek-V2-Lite</div>
+            <div class="vcell vcell--win">73.4</div>
+            <div class="vcell">34.8</div>
+            <div class="vcell vcell--ratio">2.1&times;</div>
+          </div>
+
+          <div class="vrow">
+            <div class="vname">Qwen3-30B-A3B</div>
+            <div class="vcell vcell--win">51.6</div>
+            <div class="vcell">21.5</div>
+            <div class="vcell vcell--ratio">2.4&times;</div>
+          </div>
+
+          <div class="vrow">
+            <div class="vname">Qwen2.5-72B</div>
+            <div class="vcell">6.8</div>
+            <div class="vcell vcell--win">7.1</div>
+            <div class="vcell vcell--ratio">1.0&times;</div>
+          </div>
+
+          <div class="vrow">
+            <div class="vname">GLM-4.5-Air</div>
+            <div class="vcell vcell--win">17.4</div>
+            <div class="vcell">9.1</div>
+            <div class="vcell vcell--ratio">1.9&times;</div>
+          </div>
+
+          <div class="vrow">
+            <div class="vname">Qwen3-235B-A22B</div>
+            <div class="vcell vcell--win">5.0</div>
+            <div class="vcell">3.5</div>
+            <div class="vcell vcell--ratio">1.4&times;</div>
+          </div>
+
+          <div class="vrow vrow--last">
+            <div class="vname">GLM-4.6</div>
+            <div class="vcell">4.0</div>
+            <div class="vcell">4.0</div>
+            <div class="vcell vcell--ratio">1.0&times;</div>
+          </div>
+
+        </div>
+
+        <p class="dtable__note">Tokens per second, both modes forced on the same model and the same hardware. A
+          separate run from the table above, on the same harness &mdash; the pipeline column agrees with it to within a
+          few per cent on the small models and drifts up to twenty on the large ones, which is the run-to-run spread.
+          Read the ratio rather than the absolute figures. Qwen2.5-72B appears in both columns for the first time here:
+          it had no pipeline implementation until recently, and forcing that mode used to hang rather than fail.</p>
+      </div>
+
+      <p class="prose" style="margin-top: 32px;">The likely reason is that single-stream decoding at batch size one is
+        bound by memory bandwidth rather than arithmetic, so tensor parallelism's per-layer all-reduce &mdash; after
+        every attention block and every MLP block &mdash; costs more in fixed latency than it recovers by splitting the
+        compute. Pipeline pays two hops per token no matter how deep the model is. Nothing here comes out meaningfully
+        ahead in tensor mode: GLM-4.6 ties exactly, and Qwen2.5-72B's 7.1 against 6.8 is inside the run-to-run
+        spread.</p>
+
+      <p class="prose">That inverts the usual advice, and it changes what the sharding patch is <em>for</em>. It is not
+        a performance feature on this hardware; it is a compatibility feature. Its value is that it makes models
+        runnable whose head counts do not divide by the node count, on architectures that have no pipeline
+        implementation to fall back on. Qwen2.5-72B was the case that proved it, and it has since gained a pipeline
+        implementation too &mdash; which is the better fix, and is why its two columns now sit on top of each other.
+        Pipeline stays the default everywhere it exists.</p>
+
+      <p class="prose">Two rows sit almost exactly on top of each other in size and tell you what the distribution
+        costs. Qwen3-Coder-Next is 42GB and runs on <em>one</em> node at 10.3 tokens per second; at the time it had
+        neither pipeline nor sharding support anywhere, and needed neither. Qwen2.5-72B is 41GB, one gigabyte smaller,
+        and runs across all three at 6.4. That is not a clean experiment &mdash; different architectures, and the 72B is dense where the
+        other is not &mdash; but it is the closest pairing available here, and it points the same way as everything
+        else on the page: the cluster is not a faster machine. It is a machine that can hold things no single node here
+        can hold, and you pay for that in latency on every token.
       </p>
 
     </div>
@@ -1056,10 +1198,9 @@
           <div>
             <div class="guide__rule">This buys capacity, not speed.</div>
             <p class="guide__body">A cluster like this lets you run models that fit on no single machine you own. It
-              does not make them fast. Measured across the same sweep, throughput falls from about 62 tokens per second
-              on the small models to 21 at 106B and 12.6 on the 235B, and dense models cost more than their size
-              suggests &mdash; the 41GB Qwen2.5-72B manages 8.3 &mdash; while a 42GB model that fits on <em>one</em>
-              node runs at 36 without any of this machinery. If everything you care about fits on one box,
+              does not make them fast. Measured across the same sweep, throughput falls from about 74 tokens per second
+              on the smallest model to 18 at 106B and 6 on the 235B, and a 42GB model that fits on <em>one</em> node
+              still only manages 10 &mdash; so the ceiling is low even before you distribute anything. If everything you care about fits on one box,
               buy the bigger box. This is worth doing only for the models that do not fit, and what you get is
               capability, not speed.
             </p>

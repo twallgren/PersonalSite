@@ -582,3 +582,21 @@ ul { padding: 0; list-style: none; }
   .toc__meta { grid-column: 2; text-align: left; margin-top: 3px; }
   .fold > summary { gap: 12px; }
 }
+
+/* ---------- two-mode comparison table ---------- */
+/* Narrower sibling of .dtable: same idiom, four columns. */
+
+.vs { margin-top: 28px; }
+.vs__scroll { overflow-x: auto; }
+.vrow {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1.1fr;
+  gap: 20px; align-items: baseline; padding: 13px 0;
+  border-bottom: 1px solid var(--hairline); min-width: 560px;
+}
+.vrow--head { align-items: end; padding: 0 0 10px; border-bottom: 2px solid var(--ink); }
+.vrow--last { border-bottom: 2px solid var(--ink); }
+.vname { font-size: 15px; font-weight: 600; }
+.vcell { font-size: 14px; font-weight: 700; }
+.vcell--win { color: var(--pos); }
+.vcell--na { font-weight: 500; color: var(--faint); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.vcell--ratio { font-weight: 500; color: var(--muted); font-size: 13px; }
