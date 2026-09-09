@@ -49,10 +49,11 @@
         <div>
           <h1 class="post-title">Running a 235B model across three MacBooks</h1>
           <p class="standfirst">Three second-hand M1 Max MacBook Pros, cabled into a Thunderbolt ring, pooling 192GB of
-            unified memory to run a model that fits on none of them. It works &mdash; but only after patching MLX,
-            after three confident conclusions turned out to be wrong, and after finding that the library had been
-            silently dropping a layer the whole time. Most of those patches are upstream now, so the path is shorter
-            than the one described here.</p>
+            unified memory to run models that fit on none of them. The goal was never a particular model &mdash; it was
+            a local one good enough to trust with real work, and 192GB was the affordable answer. It got there, but
+            only after patching MLX, after three confident conclusions turned out to be wrong, and after finding that
+            the library had been silently dropping a layer the whole time. Most of those patches are upstream now, so
+            the path is shorter than the one described here.</p>
         </div>
         <aside class="stats">
           <div class="stat">
@@ -68,8 +69,8 @@
             <div class="stat__label">Parameters, 4-bit</div>
           </div>
           <div class="stat">
-            <div class="stat__num">6.0</div>
-            <div class="stat__label">Tokens per second, 235B</div>
+            <div class="stat__num">$3,750</div>
+            <div class="stat__label">Total hardware cost</div>
           </div>
         </aside>
       </div>
@@ -80,20 +81,25 @@
         <div class="toc__row">
           <span class="toc__num">01</span>
           <a class="toc__link" href="#start">Start here &mdash; if you are going to try this</a>
-          <span class="toc__meta">12 rules</span>
+          <span class="toc__meta">13 rules</span>
         </div>
         <div class="toc__row">
           <span class="toc__num">02</span>
+          <a class="toc__link" href="#why">How I got here</a>
+          <span class="toc__meta">Why this hardware</span>
+        </div>
+        <div class="toc__row">
+          <span class="toc__num">03</span>
           <a class="toc__link" href="#goal">The goal</a>
           <span class="toc__meta">What and why</span>
         </div>
         <div class="toc__row">
-          <span class="toc__num">03</span>
+          <span class="toc__num">04</span>
           <a class="toc__link" href="#plan">The plan</a>
           <span class="toc__meta">Topology</span>
         </div>
         <div class="toc__row">
-          <span class="toc__num">04</span>
+          <span class="toc__num">05</span>
           <a class="toc__link" href="#broke">What broke</a>
           <span class="toc__meta">12 failures</span>
         </div>
@@ -103,17 +109,17 @@
           <span class="toc__meta">Incl. the dropped layer</span>
         </div>
         <div class="toc__row">
-          <span class="toc__num">05</span>
+          <span class="toc__num">06</span>
           <a class="toc__link" href="#constraint">The constraint that shapes everything</a>
           <span class="toc__meta">The technical core</span>
         </div>
         <div class="toc__row">
-          <span class="toc__num">06</span>
+          <span class="toc__num">07</span>
           <a class="toc__link" href="#patches">Two patches to MLX</a>
           <span class="toc__meta">With code</span>
         </div>
         <div class="toc__row">
-          <span class="toc__num">07</span>
+          <span class="toc__num">08</span>
           <a class="toc__link" href="#results">What runs, and how fast</a>
           <span class="toc__meta">8 models measured</span>
         </div>
@@ -121,6 +127,11 @@
           <span class="toc__num">A</span>
           <a class="toc__link" href="#appendix">The rules, with the reasoning</a>
           <span class="toc__meta">Long form</span>
+        </div>
+        <div class="toc__row">
+          <span class="toc__num">&mdash;</span>
+          <a class="toc__link" href="#closing">Did it work?</a>
+          <span class="toc__meta">The honest answer</span>
         </div>
       </nav>
     </div>
@@ -139,11 +150,15 @@
           nothing and quietly dropped a layer or two instead. Neither limit was real; only one of them told you.</div>
       </div>
 
-      <p class="prose" style="margin-top: 32px;">Twelve rules, in the order I wish I had learned them. Each one links
+      <p class="prose" style="margin-top: 32px;">Thirteen rules, in the order I wish I had learned them. Each one links
         to the reasoning behind it in the <a href="#appendix">appendix</a> at the end &mdash; the rest of the page is
         the story of how they were arrived at, which you do not need in order to use them.</p>
 
       <div class="rules">
+        <a class="rules__row" href="#before-you-buy">
+          <span class="rules__cat">Before you buy</span>
+          <span class="rules__text">Ask whether distributed inference is an option. Nothing will volunteer it.</span>
+        </a>
         <a class="rules__row" href="#node-count">
           <span class="rules__cat">Node count</span>
           <span class="rules__text">Three nodes is fine. Budget the patching effort, not a fourth machine.</span>
@@ -195,25 +210,96 @@
       </div>
     </div>
 
-    <!-- ============ 02 THE GOAL ============ -->
+    <!-- ============ 02 HOW I GOT HERE ============ -->
+
+    <div id="why" class="section wrap">
+      <div class="section__head"><span class="section__num">02</span>
+        <h2 class="section__label">How I got here</h2>
+      </div>
+
+      <p class="prose">The interest was never in a particular model. It was in running one locally at all &mdash; free,
+        private, customizable, mine &mdash; and for a while a 24GB M3 MacBook Air made that look easy. The models I
+        tried in LM Studio answered well enough that I started daydreaming about one running around the clock as a
+        personal assistant, plugging away at coding projects. Slow would have been fine. Free, private and customizable
+        was the point.</p>
+
+      <p class="prose">Then OpenClaw came out, I pointed it at LM Studio, and the daydream did not survive contact with
+        an agent loop. The models that fit in 24GB struggled to use tools properly, hallucinated freely, misread what I
+        was asking for, and visibly lost the middle of their own context. I ran a Claude agent alongside it as training
+        wheels &mdash; watching what OpenClaw did and rewriting its config, memory and skills to give it a better
+        chance. Every time it failed the same way twice, the fix took the same shape: take some judgment out of the task
+        by making the instructions more specific. That helped a little. It did not help enough, and eventually I shut
+        the instance down.</p>
+
+      <p class="prose">The lesson is the one I would hand to anyone about to spend money on this. A small model in a
+        chat window and the same model inside an agent loop are not the same product. Casual chat tests tool use,
+        intent and long-context recall one at a time, if at all; an agent needs all three to hold at once, for hours.
+        What I had actually measured was that the models felt capable, which turned out to be a different claim.</p>
+
+      <p class="prose">So I went looking for more memory. The obvious answer was a high-memory Mac mini, and by the
+        time I looked the prices had climbed and the delivery dates were months out. Worse, I did not know how much
+        memory the capability I wanted actually required. Apple's memory is not upgradable &mdash; whatever I bought I
+        would be stuck with, and the likely ending was wishing I had bought better. The configurations large enough to
+        feel safe were far too expensive. I stopped looking at Macs.</p>
+
+      <div class="when" style="margin-top: 40px;">
+        <div class="when__col">
+          <div class="when__kicker when__kicker--pos">What every chatbot recommended</div>
+          <div class="when__title">Three options, all single-machine</div>
+          <div class="when__body">A high-end Mac, a custom PC build, or one of the mini desktops with 128 or 192GB of
+            unified memory. The custom build was cheapest, though not by much, so the time and space a mini desktop
+            saved made it the more attractive one. I was close to buying it.</div>
+        </div>
+        <div class="when__col">
+          <div class="when__kicker when__kicker--neg">What none of them mentioned</div>
+          <div class="when__title">That you can split a model across machines</div>
+          <div class="when__body">Several conversations and a lot of searching never raised distributed inference. I
+            found it on a last search before buying, asking directly whether Apple supported it and expecting a flat
+            no. The answer was yes, via MLX.</div>
+        </div>
+      </div>
+
+      <p class="prose" style="margin-top: 36px;">That is the most useful thing in this section, so it is worth saying
+        plainly: the option that turned out to be right was the one nothing surfaced on its own. I had to name it in a
+        question, and I only named it because I wanted it ruled out. If you are pricing hardware for this, ask about
+        the approaches you assume are impossible before you assume it.</p>
+
+      <p class="prose">Distributed also answered the objection that had killed every single-machine option. If the
+        first purchase falls short you add a node &mdash; more memory and more compute &mdash; rather than replacing the
+        machine. That converts an irreversible guess into a decision you can revise, which is precisely what made the
+        guess hard to make in the first place.</p>
+
+      <p class="prose">After that the hardware chose itself. The Max variants of Apple silicon have substantially
+        higher memory bandwidth than the non-Max chips, and bandwidth is what inference is short of. Price per gigabyte
+        was lowest on the 64GB machines and lowest of all on the M1 Max, which is old enough to be cheap second-hand
+        and still fast enough to be worth owning. 192GB of pooled memory looked like enough to clear the bar I cared
+        about. Three MacBook Pros, about $1,250 each.</p>
+    </div>
+
+    <!-- ============ 03 THE GOAL ============ -->
 
     <div id="goal" class="section wrap">
-      <div class="section__head"><span class="section__num">02</span>
+      <div class="section__head"><span class="section__num">03</span>
         <h2 class="section__label">The goal</h2>
       </div>
 
-      <p class="prose">One model, sharded across three machines. Not three independent model servers behind a load
-        balancer &mdash; a single set of weights split into thirds, with every token passing through all three nodes.
-        The three Macs are <span class="tok">ai-1</span>, <span class="tok">ai-2</span> and <span
-          class="tok">ai-3</span>: 2021 M1 Max MacBook Pros, 64GB of unified memory each, bought second-hand for about
-          $1,250 apiece.
-        Individually they run a 30B model comfortably. Pooled, they have 192GB, which is enough for a 235B-parameter
-        model at 4-bit quantization.</p>
+      <p class="prose">The goal was not a model. It was a local one capable, reliable and trustworthy enough to hand
+        real work to &mdash; a full-time assistant and software developer that happens to run on hardware I own.
+        192GB was the affordable answer to &ldquo;how much memory does that take&rdquo;, and every technical decision
+        below follows from that number rather than from any particular set of weights.</p>
 
-      <p class="prose">The target was <span class="tok">Qwen3-235B-A22B-Instruct-2507-4bit</span> &mdash; 123GB on disk,
-        leaving headroom for the key-value cache. <span class="tok">ai-1</span> acts as the controller and the private
-        API endpoint; the other two are compute workers. Admin access runs over Wi-Fi and Tailscale; the model
-        interconnect runs over direct Thunderbolt cabling and nothing else.</p>
+      <p class="prose">What 192GB requires in practice is one model sharded across three machines. Not three
+        independent model servers behind a load balancer &mdash; a single set of weights split into thirds, with every
+        token passing through all three nodes. The three Macs are <span class="tok">ai-1</span>, <span
+          class="tok">ai-2</span> and <span class="tok">ai-3</span>: 2021 M1 Max MacBook Pros, 64GB of unified memory
+        each. Individually they run a 30B model comfortably. Pooled, they have 192GB.</p>
+
+      <p class="prose"><span class="tok">Qwen3-235B-A22B-Instruct-2507-4bit</span> became the proof case rather than
+        the objective. At 123GB on disk it is the largest thing that fits with headroom left for the key-value cache,
+        so if it runs at all, the pooling is real and not an elaborate way of loading three copies of something
+        smaller. <span class="tok">ai-1</span> acts as the controller and the private API endpoint; the other two are
+        compute workers. Admin access runs over Wi-Fi and Tailscale; the model interconnect runs over direct
+        Thunderbolt cabling and nothing else.</p>
 
       <div class="when" style="margin-top: 40px;">
         <div class="when__col">
@@ -241,7 +327,7 @@
     <!-- ============ 03 THE PLAN ============ -->
 
     <div id="plan" class="section wrap">
-      <div class="section__head"><span class="section__num">03</span>
+      <div class="section__head"><span class="section__num">04</span>
         <h2 class="section__label">The plan</h2>
       </div>
 
@@ -283,7 +369,7 @@
     <div id="broke" class="section wrap">
       <div class="section__head section__head--spread">
         <div style="display: flex; align-items: baseline; gap: 20px;">
-          <span class="section__num">04</span>
+          <span class="section__num">05</span>
           <h2 class="section__label">What broke</h2>
         </div>
         <div class="section__note">Twelve failures &middot; expand any one</div>
@@ -614,7 +700,7 @@
     <!-- ============ 06 THE CONSTRAINT ============ -->
 
     <div id="constraint" class="section wrap">
-      <div class="section__head"><span class="section__num">05</span>
+      <div class="section__head"><span class="section__num">06</span>
         <h2 class="section__label">The constraint that shapes everything</h2>
       </div>
 
@@ -694,7 +780,7 @@
     <!-- ============ 07 THE PATCHES ============ -->
 
     <div id="patches" class="section wrap">
-      <div class="section__head"><span class="section__num">06</span>
+      <div class="section__head"><span class="section__num">07</span>
         <h2 class="section__label">Two patches to MLX</h2>
       </div>
 
@@ -818,7 +904,7 @@
     <div id="results" class="section wrap">
       <div class="section__head section__head--spread">
         <div style="display: flex; align-items: baseline; gap: 20px;">
-          <span class="section__num">07</span>
+          <span class="section__num">08</span>
           <h2 class="section__label">What runs, and how fast</h2>
         </div>
         <div class="section__note">Measured on the cluster &middot; blanks left blank</div>
@@ -1061,6 +1147,23 @@
 
       <div class="guide">
 
+        <div class="guide__item" id="before-you-buy">
+          <div class="guide__cat">Before you buy</div>
+          <div>
+            <div class="guide__rule">Ask whether distributed inference is an option. Nothing will volunteer it.</div>
+            <p class="guide__body">Every chatbot I asked about running large models locally returned the same three
+              options: a high-end Mac, a custom PC build, or a mini desktop with 128 or 192GB of unified memory. Weeks
+              of searching returned the same three. Not one of them mentioned that Apple silicon can split a single
+              model across several machines, and I only learned it because I ran a last search before buying, expecting
+              the idea to be ruled out.</p>
+            <p class="guide__body" style="margin-top: 14px;">This is more than a missing footnote, because it is the
+              only option on that list that is not a one-shot bet. Apple's memory is not upgradable, so a single
+              machine means guessing how much you will eventually need and living with the guess. A cluster you can add
+              a node to turns that guess into a decision you can revise later. Ask the question explicitly before you
+              spend anything, and treat silence on a capability question as untested rather than as no.</p>
+          </div>
+        </div>
+
         <div class="guide__item" id="node-count">
           <div class="guide__cat">Node count</div>
           <div>
@@ -1271,7 +1374,27 @@
     <!-- ============ CLOSING ============ -->
 
     <div id="closing" class="section wrap">
-      <div class="slab">
+
+      <div class="baseline">
+        <div class="baseline__label">Did it work?</div>
+        <div class="baseline__text">I do not know yet. The cluster does what the hardware was bought to do. Whether it
+          clears the bar I bought it for is untested, because I have spent this entire project on the infrastructure
+          and none of it on the thing the infrastructure is for.</div>
+      </div>
+
+      <p class="prose" style="margin-top: 32px;">That is not modesty. The original goal was a local model capable,
+        reliable and trustworthy enough to work as a full-time assistant and software developer, and I have never sat
+        down and tested it against that. The time went to the provisioning scripts, the hanging and wired-memory
+        investigation, the benchmark sweeps, the patches, the pull requests upstream, and this page. All of it was
+        necessary. None of it was the point.</p>
+
+      <p class="prose">I expect the answer to be yes, and I am aware that expecting so is exactly what I did with a
+        24GB laptop before an agent loop corrected me. So the next step is not more infrastructure. It is choosing an
+        agent framework &mdash; Paperclip, Hermes, OpenClaw, something else &mdash; deciding which machine should run
+        it, and finding out. If the answer turns out to be no, that will be worth writing down too, and it will go
+        here.</p>
+
+      <div class="slab" style="margin-top: 48px;">
         <div class="slab__kicker">What I would tell someone starting</div>
         <div class="slab__rule">Read the source before you buy hardware. Test with the real binary. Re-detect, never
           remember.</div>
@@ -1285,9 +1408,10 @@
             accepted the same awkward number, dropped a layer or two, and returned fluent text for months. A system
             that fails loudly is doing you a favour; one that degrades into plausible output is not, and only the
             second kind needs you to go and check the arithmetic yourself.</p>
-          <p>Be clear, too, about what you are buying. This is capacity, not speed &mdash; the ability to run something on
-            hardware you already own that would not otherwise fit anywhere. Judged as a fast chat machine it is a bad
-            one. Judged as 192GB of pooled memory, it does exactly what it was meant to.</p>
+          <p>Be clear, too, about what you are buying. This is capacity, not speed &mdash; the ability to run
+            something on hardware you already own that would not otherwise fit anywhere. Judged as a fast chat machine
+            it is a bad one. Judged as 192GB of pooled memory it does exactly what it was meant to, and whether 192GB
+            was the right thing to want is the question above, still open.</p>
         </div>
       </div>
     </div>
