@@ -16,6 +16,44 @@
   <title>Running a 235B model across three MacBooks — Taylor Wallgren</title>
   <meta name="description"
     content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, a shared partition bug that silently dropped a transformer layer for months, and the networking fault that surfaced as a GPU error.">
+  <link rel="canonical" href="https://taylorwallgren.com/distributed-ai-cluster.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Taylor Wallgren">
+  <meta property="og:url" content="https://taylorwallgren.com/distributed-ai-cluster.html">
+  <meta property="og:title" content="Running a 235B model across three MacBooks">
+  <meta property="og:description" content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, a shared partition bug that silently dropped a transformer layer for months, and the networking fault that surfaced as a GPU error.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Running a 235B model across three MacBooks">
+  <meta name="twitter:description" content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, a shared partition bug that silently dropped a transformer layer for months, and the networking fault that surfaced as a GPU error.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Running a 235B model across three MacBooks",
+    "description": "How three second-hand 64GB M1 Max MacBook Pros were cabled into a Thunderbolt ring to pool 192GB of unified memory and run models that fit on none of them, what had to be patched in MLX to get there, and the partition bug that silently dropped a transformer layer for months.",
+    "url": "https://taylorwallgren.com/distributed-ai-cluster.html",
+    "dateModified": "2026-09-09",
+    "author": {
+      "@type": "Person",
+      "name": "Taylor Wallgren",
+      "url": "https://taylorwallgren.com/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Taylor Wallgren"
+    },
+    "mainEntityOfPage": "https://taylorwallgren.com/distributed-ai-cluster.html",
+    "keywords": "MLX, distributed inference, Apple silicon, M1 Max, pipeline parallelism, tensor parallelism, Thunderbolt, local LLM, Qwen3-235B, mlx-lm",
+    "about": [
+      {"@type": "Thing", "name": "Distributed machine learning inference"},
+      {"@type": "Thing", "name": "Apple silicon"},
+      {"@type": "SoftwareApplication", "name": "MLX"}
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"

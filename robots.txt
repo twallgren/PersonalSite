@@ -93,3 +93,5 @@ Disallow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://taylorwallgren.com/sitemap.xml
