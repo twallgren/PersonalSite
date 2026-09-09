@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Running a 235B model across three MacBooks — Taylor Wallgren</title>
   <meta name="description"
-    content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, two custom patches to MLX, and the networking bug that surfaced as a GPU error.">
+    content="Building a 3-node MLX inference cluster from three second-hand M1 Max MacBook Pros: removing the divisibility constraint that supposedly rules out 3-node tensor parallelism, a shared partition bug that silently dropped a transformer layer for months, and the networking fault that surfaced as a GPU error.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
@@ -40,7 +40,7 @@
         <div class="post-kicker__bar"><i></i><i></i><i></i></div>
         <div class="post-kicker__status">Complete &middot; Running</div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">Last updated <time datetime="2026-09-02">2 Sep 2026</time></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-09-08">8 Sep 2026</time></div>
         <div class="post-kicker__sep"></div>
         <div class="post-kicker__meta">30 min read &middot; skimmable</div>
       </div>
@@ -49,8 +49,10 @@
         <div>
           <h1 class="post-title">Running a 235B model across three MacBooks</h1>
           <p class="standfirst">Three second-hand M1 Max MacBook Pros, cabled into a Thunderbolt ring, pooling 192GB of
-            unified memory to run a model that fits on none of them. It works &mdash; but only after patching MLX twice,
-            and after two confident conclusions turned out to be wrong.</p>
+            unified memory to run a model that fits on none of them. It works &mdash; but only after patching MLX,
+            after three confident conclusions turned out to be wrong, and after finding that the library had been
+            silently dropping a layer the whole time. Most of those patches are upstream now, so the path is shorter
+            than the one described here.</p>
         </div>
         <aside class="stats">
           <div class="stat">
@@ -98,7 +100,7 @@
         <div class="toc__row">
           <span class="toc__num">&mdash;</span>
           <a class="toc__link" href="#wrong">Three conclusions I got wrong</a>
-          <span class="toc__meta">Retractions</span>
+          <span class="toc__meta">Incl. the dropped layer</span>
         </div>
         <div class="toc__row">
           <span class="toc__num">05</span>
@@ -132,9 +134,9 @@
 
       <div class="baseline">
         <div class="baseline__label">The one thing</div>
-        <div class="baseline__text">The rule that says your model will not fit on three machines is an assumption in
-          Python, not a property of the hardware. It is about 400 lines to remove. Do not let it pick your node count
-          for you.</div>
+        <div class="baseline__text">Everything here came down to one number not dividing by three. Tensor parallelism
+          said so and refused to run &mdash; an assumption in Python, worth about 500 lines to remove. Pipeline said
+          nothing and quietly dropped a layer or two instead. Neither limit was real; only one of them told you.</div>
       </div>
 
       <p class="prose" style="margin-top: 32px;">Twelve rules, in the order I wish I had learned them. Each one links
@@ -203,7 +205,8 @@
       <p class="prose">One model, sharded across three machines. Not three independent model servers behind a load
         balancer &mdash; a single set of weights split into thirds, with every token passing through all three nodes.
         The three Macs are <span class="tok">ai-1</span>, <span class="tok">ai-2</span> and <span
-          class="tok">ai-3</span>: 2021 M1 Max MacBook Pros, 64GB of unified memory each, bought second-hand.
+          class="tok">ai-3</span>: 2021 M1 Max MacBook Pros, 64GB of unified memory each, bought second-hand for about
+          $1,250 apiece.
         Individually they run a 30B model comfortably. Pooled, they have 192GB, which is enough for a 235B-parameter
         model at 4-bit quantization.</p>
 
@@ -216,9 +219,9 @@
         <div class="when__col">
           <div class="when__kicker when__kicker--pos">What the hardware gives you</div>
           <div class="when__title">Memory you cannot otherwise buy</div>
-          <div class="when__body">192GB of unified memory across three second-hand laptops costs a fraction of a single
-            machine with that much, and every node's GPU participates. For models too large to fit anywhere else you
-            own, this is the whole point.</div>
+          <div class="when__body">About $1,250 a machine, so $3,750 for 192GB of unified memory &mdash; well under
+            what a single new machine with that much costs, and every node's GPU participates. For models too large to
+            fit anywhere else you own, this is the whole point.</div>
         </div>
         <div class="when__col">
           <div class="when__kicker when__kicker--neg">What it does not</div>
@@ -505,7 +508,9 @@
         <div class="plog__head">
           <h2 class="plog__title">Three conclusions I got wrong</h2>
           <div class="plog__blurb">Each was reached with real evidence and written down as settled. Each was wrong.
-            Keeping them on the record, because the reasoning that produced them is the interesting part.</div>
+            Keeping them on the record, because the reasoning that produced them is the interesting part. The third one
+            is the most useful finding on this page if you run any pipeline-parallel model: the library was silently
+            dropping a layer.</div>
         </div>
 
         <div class="plog__entry">
@@ -568,11 +573,15 @@
               were not running correctly.</p>
             <p class="plog__body">The shared function that assigns layers to ranks &mdash; used by every
               pipeline-capable architecture, not by anything I wrote &mdash; computed its partition by multiplying a
-              per-rank size instead of accumulating a running offset. Whenever the layer count did not divide evenly by
-              the node count, exactly one layer was assigned to nobody. It was loaded into memory and then executed by
-              no rank at all. On this cluster that hit five of the eight models: 32 layers, 80, 46, 94 and 92, none
-              divisible by three. The two that were ever correct, 27 layers and 48, were correct by arithmetic accident.
-            </p>
+              per-rank size instead of accumulating a running offset. The code did try to handle an uneven split: it
+              works out the remainder and gives the leftover layers to the low ranks. It just derived each rank's
+              starting offset from the <em>adjusted</em> size rather than from where the previous rank actually stopped,
+              so the ranks disagreed about the boundaries and layers fell through the gap. They were loaded into memory
+              and then executed by nobody.</p>
+            <p class="plog__body">On this cluster it hit five of the eight models, and how many layers went missing
+              depends on the remainder: one layer for Llama-3.1-8B at 32, Qwen2.5-72B at 80 and GLM-4.6 at 92, but
+              <em>two</em> for GLM-4.5-Air at 46 and for the 235B at 94. The two models that were ever correct, at 27
+              layers and 48, were correct by arithmetic accident.</p>
             <p class="plog__body">It survived months of use because a transformer with one missing middle layer still
               writes fluent, plausible text. It passed every spot-check I ran, including ones I designed to be strict.
               The bug was found by code review of an unrelated change, not by any output ever looking wrong &mdash; and
@@ -619,9 +628,11 @@
         Tensor parallelism also requires that the shapes divide evenly: the number of attention heads and the number of
         key-value heads must both be divisible by the node count.</p>
 
-      <p class="prose"><strong>Pipeline parallelism</strong> assigns whole transformer layers to each node instead. It
-        has no divisibility constraint whatsoever &mdash; leftover layers simply go to the first few ranks. The cost is
-        a full round trip through the ring per token.</p>
+      <p class="prose"><strong>Pipeline parallelism</strong> assigns whole transformer layers to each node instead. By
+        design it has no divisibility constraint &mdash; leftover layers simply go to the first few ranks. The cost is a
+        full round trip through the ring per token. In practice the code that did that splitting got the uneven case
+        wrong for months, which is its own story further down; the constraint was absent from the design and present in
+        the implementation.</p>
 
       <p class="prose">I checked four major open models against the tensor-parallel rule at three nodes, and every one
         failed. The reason is more specific than &ldquo;the numbers are awkward&rdquo;. Qwen3-235B-A22B has 64 attention
@@ -910,7 +921,8 @@
       <p class="prose" style="margin-top: 40px;">The 235B row is the one the project was for. 40 + 41 + 41 comes to
         122GB against a model that occupies 123GB on disk &mdash; which is the actual proof that it split three ways
         rather than quietly replicating onto each node. Replication would have shown roughly 123GB on every machine, and
-        would not have fit on any of them. GLM-4.6 pushes that further: 145GB spread across three machines that hold
+        would not have fit on any of them. GLM-4.6 pushes that further: 144GB on disk becomes 145GB resident once loaded,
+        spread across three machines that hold
         64GB each, which is simply not a thing any one of them can do.</p>
 
       <p class="prose">The strategy column is worth reading against that, though it has moved since the work was done.
@@ -930,8 +942,8 @@
         at essentially the same speed, 6.0. The 72B is dense, so every parameter participates in every token, while the
         235B activates 22B of its parameters at a time &mdash; three times the weights, comparable work per token. What
         throughput tracks is active parameters and round trips. Hold that fixed and the decline is real enough &mdash;
-        about 74 tokens per second on the smallest pipelined model, 51 at 30B, 18 at 106B, 6 at 235B, 3.9 at the top
-        end &mdash; and that is the cost of moving every token around the ring, not a bug waiting to be tuned away.</p>
+        about 74 tokens per second on DeepSeek-V2-Lite, the sparsest model here, 51 at 30B, 18 at 106B, 6 at 235B,
+        3.9 at the top end &mdash; and that is the cost of moving every token around the ring, not a bug waiting to be tuned away.</p>
 
       <h3 class="guide__rule" style="margin-top: 52px; font-size: 22px;">Pipeline against tensor, the same models both
         ways</h3>
@@ -1073,7 +1085,9 @@
             <p class="guide__body">A Mac mini or Studio restarts itself after a power cut. A MacBook that fully drains
               its battery does not &mdash; it needs a physical press of the power button, and no software setting
               changes that. Mine drained to zero <em>while plugged in</em>, because sustained full-compute draw can
-              exceed what the charger supplies. Related: FileVault and Automatic Login are mutually exclusive on macOS,
+              exceed what the charger supplies &mdash; a 16-inch M1 Max wants something like 96W of USB-C power
+              delivery to hold its own under load, and anything less loses ground slowly enough that you will not
+              notice until the node is gone. Related: FileVault and Automatic Login are mutually exclusive on macOS,
               because FileVault's pre-boot prompt happens before the OS can read the auto-login preference. So an
               unattended reboot either leaves the machine encrypted-and-stuck or unencrypted-and-recoverable. Pick
               deliberately.</p>
@@ -1228,8 +1242,8 @@
           <div>
             <div class="guide__rule">This buys capacity, not speed.</div>
             <p class="guide__body">A cluster like this lets you run models that fit on no single machine you own. It
-              does not make them fast. Measured across the same sweep, throughput falls from about 74 tokens per second
-              on the smallest model to 18 at 106B and 6 on the 235B, and a 42GB model that fits on <em>one</em> node
+              does not make them fast. Measured across the same sweep, the best case is 74 tokens per second on a
+              16B model with only 2.4B parameters active, falling to 18 at 106B and 6 on the 235B, and a 42GB model that fits on <em>one</em> node
               still only manages 10 &mdash; so the ceiling is low even before you distribute anything. If everything you care about fits on one box,
               buy the bigger box. This is worth doing only for the models that do not fit, and what you get is
               capability, not speed.
@@ -1249,9 +1263,14 @@
           remember.</div>
         <div class="slab__cols">
           <p>The constraint that shaped this project turned out not to be a constraint. Three nodes looked like the
-            wrong number for months, and the fix was framed everywhere as buying a fourth machine. It was about 400
+            wrong number for months, and the fix was framed everywhere as buying a fourth machine. It was about 500
             lines of Python standing in for a limit the hardware never had. Check whether the wall you have hit is made
             of silicon or of someone's simplifying assumption &mdash; the second kind you can move.</p>
+          <p>The harder half is that the same arithmetic failed twice and only announced itself once. Tensor
+            parallelism refused to run and sent me to read its source, which is how the limit got removed. Pipeline
+            accepted the same awkward number, dropped a layer or two, and returned fluent text for months. A system
+            that fails loudly is doing you a favour; one that degrades into plausible output is not, and only the
+            second kind needs you to go and check the arithmetic yourself.</p>
           <p>Be clear, too, about what you are buying. This is capacity, not speed &mdash; the ability to run something on
             hardware you already own that would not otherwise fit anywhere. Judged as a fast chat machine it is a bad
             one. Judged as 192GB of pooled memory, it does exactly what it was meant to.</p>
