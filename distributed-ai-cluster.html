@@ -1170,6 +1170,14 @@
               than the envelope. I default mine to <span class="tok">8192</span>. While you are there, put a ceiling on the
               key-value cache too &mdash; it is unbounded by default, and an unbounded cache across a long session is a
               slow build toward the memory pressure described further down.</p>
+            <p class="guide__body" style="margin-top: 14px;">Size that ceiling per model rather than picking one number.
+              These are identical machines, but what is left after the weights load is not: Llama-3.1-8B occupies 2.2GB
+              a node and leaves about 58GB free, while GLM-4.6 occupies 51GB and leaves about nine. A single cap is
+              therefore both too tight and too loose at once &mdash; mine was 8GiB, which made the small models pay
+              avoidable cache misses while handing most of the remaining room to the one model that had caused the
+              memory trouble in the first place. I now derive each model&rsquo;s cap from its own measured footprint:
+              half of what is left after the weights and an allowance for the OS, which comes out at 16GiB for the
+              models under 20GB a node and 4GiB for the largest.</p>
             <p class="guide__body" style="margin-top: 14px;">Two more worth setting deliberately on a cluster this full.
               <span class="tok">--prompt-cache-size</span> defaults to holding ten distinct KV caches in memory, which
               is generous when your spare headroom is single-digit gigabytes per node &mdash; I lowered it to five. And
@@ -1234,6 +1242,12 @@
               leaving the other two alone as a control dropped it from 54GB to 2GB while they did not move &mdash; which
               is what makes it leaked rather than legitimate. Check wired memory, not process memory, and treat a reboot
               as the recovery step rather than the last resort.</p>
+            <p class="guide__body" style="margin-top: 14px;">Since capping the cache the hang has not recurred, through
+              five days of repeatedly loading and unloading every model on the list. That is suggestive rather than
+              conclusive &mdash; five days is not long to watch an intermittent, load-dependent failure, and there are
+              enough retractions on this page already to be wary of one drawn from a quiet week. What it does support is
+              the ordering: bounding the cache attacks the pressure that precedes the hang, while rebooting only cleans
+              up after it. Do the first, and keep knowing how to do the second.</p>
           </div>
         </div>
 
