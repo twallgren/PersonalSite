@@ -920,7 +920,8 @@
 
       <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">Where this ended up</h3>
 
-      <p class="prose">All of it is now open against the upstream projects, in three pieces plus the core change:</p>
+      <p class="prose">It went upstream as the core change plus four model-side pieces. One has landed; the rest are
+        queued behind it:</p>
 
       <div class="meta-row meta-row--stack">
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx/pull/4465">mlx #4465</a></span><span
@@ -928,20 +929,33 @@
             change</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1863">mlx-lm
               #1863</a></span><span class="meta__v">The model-side sharding, six more architectures</span><span
-            class="meta__x">blocked on #4465</span></div>
+            class="meta__x">draft, blocked on #4465</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1862">mlx-lm
               #1862</a></span><span class="meta__v">Pipeline support for Qwen2 and Qwen3-Next</span><span
             class="meta__x">independent</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1861">mlx-lm
-              #1861</a></span><span class="meta__v">A checkpoint-loading fix, and DeepSeek-V3.2 onto the shared pipeline
-            base</span><span class="meta__x">independent</span></div>
+              #1861</a></span><span class="meta__v">DeepSeek-V3.2 onto the shared pipeline base</span><span
+            class="meta__x">merged 11 Sep</span></div>
+        <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1875">mlx-lm
+              #1875</a></span><span class="meta__v">A weight-stacking gate that assumes layer 0 is a MoE
+            layer</span><span class="meta__x">draft, split out of #1861</span></div>
       </div>
 
       <p class="prose" style="margin-top: 28px;">Splitting them along those lines rather than by model family was
         deliberate: one is a pure bug fix against code that already ships, one is new capability with no dependencies,
         and one cannot merge until the core change does. Bundling them would have mixed &ldquo;urgent&rdquo; with
-        &ldquo;blocked&rdquo; in a single review. The fourth piece, the layer-drop fix, is not on this list &mdash;
-        upstream&rsquo;s own version of it merged first, so mine was dropped rather than argued for.</p>
+        &ldquo;blocked&rdquo; in a single review.</p>
+
+      <p class="prose">Both halves of that have since been tested. The layer-drop fix is not on the list at all &mdash;
+        upstream&rsquo;s own version merged first, so mine was dropped rather than argued for. And #1861, which merged
+        on 11 September, got there only after shedding almost everything else it carried: the layer-drop fix to
+        upstream&rsquo;s version, and the weight-stacking gate into a separate #1875. What merged was the smallest
+        piece of what I opened.</p>
+
+      <p class="prose">The drafts are not unfinished work. <span class="tok">mlx-lm</span> allows one author only a
+        single non-draft pull request open at a time, so the queue behind the current one waits as drafts by necessity.
+        It is a sensible throttle on review load, and worth knowing before you plan a split like this: the order you
+        choose is the order they will be read in, one at a time.</p>
     </div>
 
     <!-- ============ 08 RESULTS ============ -->
