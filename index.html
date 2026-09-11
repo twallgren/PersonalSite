@@ -94,16 +94,17 @@
         <div class="card__tag">Current &middot; Independent</div>
         <div class="card__title">Distributed AI cluster</div>
         <div class="card__body">Three second-hand M1 Max MacBooks cabled into a Thunderbolt ring, pooling 192GB of
-          unified memory to run a 235B-parameter model that fits on none of them. Getting there meant patching MLX twice
-          &mdash; once to add pipeline support for the target architecture, once to remove the divisibility constraint
-          from tensor parallelism entirely.</div>
+          unified memory to run models too large for any one of them, up to 235B parameters. The goal was a local model
+          good enough to trust with real work. Getting there meant patching MLX, mostly now upstream, and finding a
+          partition bug that had been silently dropping layers.</div>
         <div class="card__facts">
           <span class="chip">MLX</span>
           <span class="chip">192GB pooled</span>
           <span class="chip">Thunderbolt ring</span>
-          <span class="chip">Custom patches</span>
+          <span class="chip">Upstream PRs</span>
         </div>
-        <div class="card__link"><a href="distributed-ai-cluster.html">Read the write-up</a></div>
+        <div class="card__link"><a href="distributed-ai-cluster.html">Read the write-up</a> &nbsp;&middot;&nbsp; <a
+            href="https://github.com/twallgren/mlx-cluster">The scripts</a></div>
       </div>
 
       <div class="card">

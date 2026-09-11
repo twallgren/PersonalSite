@@ -34,7 +34,7 @@
     "headline": "Running a 235B model across three MacBooks",
     "description": "How three second-hand 64GB M1 Max MacBook Pros were cabled into a Thunderbolt ring to pool 192GB of unified memory and run models that fit on none of them, what had to be patched in MLX to get there, and the partition bug that silently dropped a transformer layer for months.",
     "url": "https://taylorwallgren.com/distributed-ai-cluster.html",
-    "dateModified": "2026-09-09",
+    "dateModified": "2026-09-11",
     "author": {
       "@type": "Person",
       "name": "Taylor Wallgren",
@@ -49,7 +49,8 @@
     "about": [
       {"@type": "Thing", "name": "Distributed machine learning inference"},
       {"@type": "Thing", "name": "Apple silicon"},
-      {"@type": "SoftwareApplication", "name": "MLX"}
+      {"@type": "SoftwareApplication", "name": "MLX"},
+      {"@type": "SoftwareSourceCode", "name": "mlx-cluster", "codeRepository": "https://github.com/twallgren/mlx-cluster", "programmingLanguage": "Zsh"}
     ]
   }
   </script>
@@ -78,7 +79,7 @@
         <div class="post-kicker__bar"><i></i><i></i><i></i></div>
         <div class="post-kicker__status">Complete &middot; Running</div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">Last updated <time datetime="2026-09-08">8 Sep 2026</time></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-09-11">11 Sep 2026</time></div>
         <div class="post-kicker__sep"></div>
         <div class="post-kicker__meta">30 min read &middot; skimmable</div>
       </div>
@@ -191,6 +192,11 @@
       <p class="prose" style="margin-top: 32px;">Thirteen rules, in the order I wish I had learned them. Each one links
         to the reasoning behind it in the <a href="#appendix">appendix</a> at the end &mdash; the rest of the page is
         the story of how they were arrived at, which you do not need in order to use them.</p>
+
+      <p class="prose">If you want to build one rather than read about it, the scripts that built and run this cluster
+        are public at <a href="https://github.com/twallgren/mlx-cluster">github.com/twallgren/mlx-cluster</a>, with a step-by-step setup guide that goes
+        from unboxed Macs to a model answering requests. Most of the rules below are built into them, so following the
+        guide gets you their benefit without having to remember them.</p>
 
       <div class="rules">
         <a class="rules__row" href="#before-you-buy">
@@ -390,7 +396,8 @@
         rebuilt from scratch without touching it physically: SSH key distribution, disabling sleep, matching Python
         environments at identical paths on all three, pushing a Hugging Face token, and configuring the Thunderbolt
         network. The API binds only to loopback on the controller and is reached through an SSH tunnel &mdash; nothing
-        about this is exposed to the network.</p>
+        about this is exposed to the network. Those scripts are published as <a
+          href="https://github.com/twallgren/mlx-cluster">twallgren/mlx-cluster</a>; nothing in them assumes three nodes or this hardware.</p>
 
       <p class="code__label">Launching the cluster</p>
       <div class="code">mlx.launch --backend ring --hostfile cluster.json --env MLX_METAL_FAST_SYNCH=1 -- \
