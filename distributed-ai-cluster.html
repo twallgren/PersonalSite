@@ -34,7 +34,7 @@
     "headline": "Running a 235B model across three MacBooks",
     "description": "How three second-hand 64GB M1 Max MacBook Pros were cabled into a Thunderbolt ring to pool 192GB of unified memory and run models that fit on none of them, what had to be patched in MLX to get there, and the partition bug that silently dropped a transformer layer for months.",
     "url": "https://taylorwallgren.com/distributed-ai-cluster.html",
-    "dateModified": "2026-09-11",
+    "dateModified": "2026-09-14",
     "author": {
       "@type": "Person",
       "name": "Taylor Wallgren",
@@ -79,7 +79,7 @@
         <div class="post-kicker__bar"><i></i><i></i><i></i></div>
         <div class="post-kicker__status">Complete &middot; Running</div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">Last updated <time datetime="2026-09-11">11 Sep 2026</time></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-09-14">14 Sep 2026</time></div>
         <div class="post-kicker__sep"></div>
         <div class="post-kicker__meta">30 min read &middot; skimmable</div>
       </div>
@@ -856,7 +856,8 @@
         producing real completions with memory genuinely divided three ways before committing to the 123GB download.</p>
 
       <p class="prose">Upstream has since added pipeline parallelism for Qwen3-MoE independently, so that half of the
-        work is now in the library for anyone on a current version &mdash; including this cluster, which runs upstream's
+        work is now in the library for anyone installing from its main branch &mdash; not yet from a tagged release
+        &mdash; including this cluster, which runs upstream's
         implementation now rather than mine. Retiring my own patch in favour of it is the right outcome, and also the
         useful data point: the gap was small enough that someone else closed it within weeks. Treat &ldquo;the library
         does not do this yet&rdquo; as a claim with a short shelf life, and check before you start writing.</p>
@@ -920,8 +921,8 @@
 
       <h3 class="guide__rule" style="margin-top: 48px; font-size: 22px;">Where this ended up</h3>
 
-      <p class="prose">It went upstream as the core change plus four model-side pieces. One has landed; the rest are
-        queued behind it:</p>
+      <p class="prose">It went upstream as the core change plus four model-side pieces. Three have landed; the two that
+        carry the uneven sharding itself are still open:</p>
 
       <div class="meta-row meta-row--stack">
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx/pull/4465">mlx #4465</a></span><span
@@ -929,16 +930,16 @@
             change</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1863">mlx-lm
               #1863</a></span><span class="meta__v">The model-side sharding, six more architectures</span><span
-            class="meta__x">draft, blocked on #4465</span></div>
+            class="meta__x">open, blocked on #4465</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1862">mlx-lm
               #1862</a></span><span class="meta__v">Pipeline support for Qwen2 and Qwen3-Next</span><span
-            class="meta__x">independent</span></div>
+            class="meta__x">merged 14 Sep</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1861">mlx-lm
               #1861</a></span><span class="meta__v">DeepSeek-V3.2 onto the shared pipeline base</span><span
             class="meta__x">merged 11 Sep</span></div>
         <div class="meta"><span class="meta__k"><a href="https://github.com/ml-explore/mlx-lm/pull/1875">mlx-lm
               #1875</a></span><span class="meta__v">A weight-stacking gate that assumes layer 0 is a MoE
-            layer</span><span class="meta__x">draft, split out of #1861</span></div>
+            layer</span><span class="meta__x">merged 14 Sep</span></div>
       </div>
 
       <p class="prose" style="margin-top: 28px;">Splitting them along those lines rather than by model family was
@@ -950,12 +951,19 @@
         upstream&rsquo;s own version merged first, so mine was dropped rather than argued for. And #1861, which merged
         on 11 September, got there only after shedding almost everything else it carried: the layer-drop fix to
         upstream&rsquo;s version, and the weight-stacking gate into a separate #1875. What merged was the smallest
-        piece of what I opened.</p>
+        piece of what I opened. #1862 and #1875 followed on 14 September, which leaves only the sharding pair, and
+        that pair waits on the core change rather than on review.</p>
 
-      <p class="prose">The drafts are not unfinished work. <span class="tok">mlx-lm</span> allows one author only a
-        single non-draft pull request open at a time, so the queue behind the current one waits as drafts by necessity.
-        It is a sensible throttle on review load, and worth knowing before you plan a split like this: the order you
-        choose is the order they will be read in, one at a time.</p>
+      <p class="prose">For most of that time the later pieces sat as drafts, which was not a sign they were
+        unfinished. <span class="tok">mlx-lm</span> allows one author only a single non-draft pull request open at a
+        time, so the queue behind the current one waits as drafts by necessity. It is a sensible throttle on review
+        load, and worth knowing before you plan a split like this: the order you choose is the order they will be read
+        in, one at a time.</p>
+
+      <p class="prose">One caveat for anyone hoping to use these: merged is not released. The last tagged
+        <span class="tok">mlx-lm</span> release is 0.31.3, from April, so none of the pipeline support above arrives
+        through <span class="tok">pip install</span>. Install from the repository's <span class="tok">main</span>
+        branch to get it.</p>
     </div>
 
     <!-- ============ 08 RESULTS ============ -->
@@ -1014,7 +1022,7 @@
           </div>
 
           <div class="drow">
-            <div class="dname">Qwen3-Coder-Next<small>4-bit &middot; no pipeline or shard support &mdash; single
+            <div class="dname">Qwen3-Coder-Next<small>4-bit &middot; fits on one node, so measured on one
                 node</small></div>
             <div class="dcell dcell--num">42GB</div>
             <div class="dcell">Standalone<br><span class="dcell--none">one node</span></div>
@@ -1058,9 +1066,9 @@
           hold as throughput figures. What they are not is evidence the outputs were right, which is a separate
           question and was answered separately. The three reasoning models spend part of that budget on hidden thinking
           tokens before the visible answer, and those tokens are counted &mdash; this is real throughput, not throughput
-          adjusted to flatter it. The patch labels say what was required at the time the work was done; upstream has
-          since absorbed the Qwen3-MoE pipeline support, so most of these now run on the library's own code rather than
-          mine.</p>
+          adjusted to flatter it. The patch labels say what was required at the time the work was done. Upstream has
+          since absorbed pipeline support for Qwen3-MoE, Qwen2 and Qwen3-Next, so on its main branch every architecture
+          here except Llama now has it in the library's own code rather than mine.</p>
       </div>
 
       <p class="prose" style="margin-top: 40px;">The 235B row is the one the project was for. 40 + 41 + 41 comes to
@@ -1071,15 +1079,18 @@
         64GB each, which is simply not a thing any one of them can do.</p>
 
       <p class="prose">The strategy column is worth reading against that, though it has moved since the work was done.
-        When I started, most of these could not be distributed across three nodes at all; today five of the eight run on
-        stock MLX, because upstream absorbed the Qwen3-MoE pipeline support in the meantime. That is the honest current
-        picture, and it is a better outcome than the one where my patch stays necessary.</p>
+        When I started, most of these could not be distributed across three nodes at all. On <span
+          class="tok">mlx-lm</span>&rsquo;s main branch today, seven of the eight architectures have pipeline support
+        upstream &mdash; everything but Llama. The tagged release lags well behind: install 0.31.3 through pip and only
+        three of the eight have it, DeepSeek-V2-Lite and the two GLMs. That is the honest current picture, and it is a
+        better outcome than the one where my patches stay necessary.</p>
 
-      <p class="prose">Two rows still depend on local changes, and they are the two that make the point. <span
+      <p class="prose">Two rows were measured on local changes, and they are the two that make the point. <span
           class="tok">Qwen2.5-72B</span> fails divisibility by three on its head counts and its hidden size, and runs in
         tensor-parallel mode anyway &mdash; the constraint that supposedly rules it out was
-        removed rather than worked around. Llama-3.1-8B needs pipeline support that <span class="tok">llama.py</span>
-        still lacks upstream. Neither is a model that happened to fit. That is the difference between three nodes being
+        removed rather than worked around. Its tensor path still needs the two open pull requests, though it can now
+        run pipeline on upstream main with no local change at all. Llama-3.1-8B needs pipeline support that <span
+          class="tok">llama.py</span> still lacks upstream. Neither is a model that happened to fit. That is the difference between three nodes being
         a limitation and three nodes being a starting point.</p>
 
       <p class="prose">The throughput column is the honest headline, and the thing it does <em>not</em> track is file
