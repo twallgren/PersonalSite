@@ -5,11 +5,17 @@ Static homepage for the apex domain. GitHub Pages, no build step.
 ## Structure
 
 ```
-index.html                    the homepage
-distributed-ai-cluster.html   write-up: 3-node MLX cluster on M1 Max Macs
-style.css                     design system (shared visual language with the FieldGuide repo)
-CNAME                         taylorwallgren.com
+index.html                          the homepage
+distributed-ai-cluster.html         write-up: 3-node MLX cluster on M1 Max Macs
+agent-coordination-incidents.html   tracker: 2026 agent-coordination incidents, kept current
+style.css                           design system (shared visual language with the FieldGuide repo)
+CNAME                               taylorwallgren.com
 ```
+
+The homepage's Writing list is maintained by hand in `index.html`. Its rows
+carry a start date rather than a last-updated date, so updating an article
+does not require touching the homepage. If a homepage row does change, bump
+the homepage `<lastmod>` in `sitemap.xml` too.
 
 Article pages reuse the components in the `ARTICLE PAGES` block at the bottom
 of `style.css`, ported from the FieldGuide stylesheet so both properties keep

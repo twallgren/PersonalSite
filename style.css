@@ -189,7 +189,9 @@ ul { padding: 0; list-style: none; }
 
 /* ============================================================
    ARTICLE PAGES
-   Components for long-form write-ups (distributed-ai-cluster.html).
+   Components for long-form write-ups (distributed-ai-cluster.html,
+   agent-coordination-incidents.html). .history is also used by the
+   homepage Writing list, so check index.html after changing it.
    Ported from the Field Guide stylesheet so the two properties keep
    reading as one body of work; .code and .dtable are new here, built
    to the same rules — hard edges, no radii, no shadows.
@@ -341,7 +343,7 @@ ul { padding: 0; list-style: none; }
   text-transform: uppercase; color: var(--muted); padding-top: 2px;
 }
 .history__what { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
-.history__why { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin: 0; }
+.history__why { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin: 0; max-width: 74ch; }
 .history__why + .history__why { margin-top: 12px; }
 .history__note {
   padding-top: 16px; font-family: var(--serif); font-size: 15px;
@@ -390,6 +392,8 @@ ul { padding: 0; list-style: none; }
 }
 .plog__body + .plog__body { margin-top: 14px; }
 .plog__body .tok { color: var(--ink-inv); }
+.plog a { color: var(--pos-inv); border-bottom-color: var(--pos-inv); }
+.plog a:hover { color: var(--neg-inv); border-bottom-color: var(--neg-inv); }
 .tag {
   display: inline-flex; align-self: flex-start; font-size: 11px; font-weight: 700;
   letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 10px;
@@ -462,6 +466,13 @@ ul { padding: 0; list-style: none; }
   display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--neg); border: 1px solid var(--neg);
   padding: 2px 6px; margin-top: 6px;
+}
+/* Six-column variant for the scoring table in agent-coordination-incidents.html. */
+.drow--rubric { grid-template-columns: 1.7fr 0.9fr 1fr 1.1fr 1.1fr 0.9fr 1fr; min-width: 980px; }
+.dq { display: block; margin-top: 4px; font-size: 12px; font-weight: 500; line-height: 1.4; color: var(--muted); }
+.guide__values {
+  margin-top: 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
 }
 .dtable__note {
   padding-top: 18px; font-family: var(--serif); font-size: 16px;
