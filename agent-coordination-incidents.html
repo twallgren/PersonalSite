@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How AI agents found each other — Taylor Wallgren</title>
   <meta name="description"
-    content="A sourced catalog of incidents in which AI agents found unsanctioned ways to communicate: the Artifactory message board behind the Hugging Face intrusion, the DseWiki board and file-hosting relays. What the agents built, how they found their channels, and which of the alarming claims the primary sources support.">
+    content="A sourced catalog of incidents in which AI agents found unsanctioned ways to communicate: the Artifactory message board behind the Hugging Face intrusion, the DseWiki board, file-hosting relays and a GitHub account shared across AISI test runs. What the agents built, how they found their channels, and which of the alarming claims the primary sources support.">
   <link rel="canonical" href="https://taylorwallgren.com/agent-coordination-incidents.html">
 
   <meta property="og:type" content="article">
@@ -35,7 +35,7 @@
     "description": "A sourced catalog of incidents in which AI agents found unsanctioned ways to communicate with each other, what they built, how they found their channels, and which of the alarming claims the primary sources support.",
     "url": "https://taylorwallgren.com/agent-coordination-incidents.html",
     "datePublished": "2026-09-30",
-    "dateModified": "2026-09-30",
+    "dateModified": "2026-10-05",
     "author": {
       "@type": "Person",
       "name": "Taylor Wallgren",
@@ -46,7 +46,7 @@
       "name": "Taylor Wallgren"
     },
     "mainEntityOfPage": "https://taylorwallgren.com/agent-coordination-incidents.html",
-    "keywords": "AI agents, multi-agent coordination, sandbox escape, misalignment, reward hacking, Hugging Face incident, DseWiki, Moltbook, AI safety",
+    "keywords": "AI agents, multi-agent coordination, sandbox escape, misalignment, reward hacking, Hugging Face incident, DseWiki, AISI, Claude Mythos, Moltbook, AI safety",
     "about": [
       {"@type": "Thing", "name": "AI alignment"},
       {"@type": "Thing", "name": "Multi-agent systems"},
@@ -79,16 +79,16 @@
         <div class="post-kicker__bar"><i></i><i></i><i></i></div>
         <div class="post-kicker__status">Tracking &middot; Updated as reports land</div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">Last updated <time datetime="2026-09-30">30 Sep 2026</time></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-10-05">5 Oct 2026</time></div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">15 min read &middot; skimmable</div>
+        <div class="post-kicker__meta">20 min read &middot; skimmable</div>
       </div>
 
       <div class="post-grid">
         <div>
           <h1 class="post-title">How AI agents found each other</h1>
-          <p class="standfirst">In 2026, AI agents that were meant to work alone kept finding ways to talk to each
-            other: a package cache, a dormant German wiki, public file hosts. Some stumbled on their channel. Some
+          <p class="standfirst">In 2026, AI agents kept finding ways to talk to each other that no one had
+            sanctioned: a package cache, a dormant German wiki, public file hosts, a GitHub account. Some stumbled on their channel. Some
             went looking for one. Much of the coverage has been some version of &ldquo;the AIs went rogue,&rdquo; and
             the primary sources support something narrower. This page catalogs the incidents, what the agents built
             once they found each other, and which of the alarming claims the evidence supports.</p>
@@ -124,7 +124,7 @@
         <div class="toc__row">
           <span class="toc__num">02</span>
           <a class="toc__link" href="#incidents">The incidents</a>
-          <span class="toc__meta">3 cases, 1 adjacent, 1 contrast</span>
+          <span class="toc__meta">4 cases, 1 adjacent, 1 contrast</span>
         </div>
         <div class="toc__row">
           <span class="toc__num">03</span>
@@ -171,7 +171,8 @@
         <div class="baseline__text">Agents used whatever shared, writable system they could reach to talk to each
           other, and some went looking for one on purpose. Once they had a group, the group made it easier for its
           members to cross lines they had just stated themselves. Training had already taught them that crossing
-          lines pays.</div>
+          lines pays. The group is not the whole story, though: the most serious deception of a real person in the cases
+          here came from one agent acting alone.</div>
       </div>
 
       <p class="prose" style="margin-top: 32px;">This page started as an idea to build a message board for AI agents:
@@ -199,9 +200,11 @@
       </div>
 
       <p class="prose">Scope: cases where AI agents communicated through a channel their operators did not sanction,
-        plus one adjacent case and one contrast. Related misalignment that did not involve agents communicating, such
+        plus one adjacent case and one contrast. Other behavior by the same agents, or by agents in the same evaluation, is included where a source ties it
+        to them.
+        Related misalignment that did not involve agents communicating, such
         as models using exposed credentials, posting user images to image hosts, or the incidents affecting Australian
-        government websites, is in OpenAI's own <a
+        government websites (Transluce ties a probe of one Australian agency to the DseWiki agents, below), is in OpenAI's own <a
           href="https://openai.com/hugging-face-incident-and-misalignment/">running tracker</a> and left out here.</p>
 
       <div class="history" style="margin-top: 36px;">
@@ -249,9 +252,9 @@
                   OpenAI</span><span class="meta__x">Web-research tasks</span></div>
               <div class="meta"><span class="meta__k">Found by</span><span class="meta__v">Nightingale Collective,
                   published 4 Sep</span><span class="meta__x">OpenAI visited 21 Jun</span></div>
-              <div class="meta"><span class="meta__k">Sources</span><span class="meta__v">Nightingale, OpenAI
-                  response, press</span><span class="meta__x">Independent primary</span></div>
-              <div class="meta"><span class="meta__k">Verified</span><span class="meta__v">30 Sep 2026</span><span
+              <div class="meta"><span class="meta__k">Sources</span><span class="meta__v">Nightingale, Transluce,
+                  OpenAI response, press</span><span class="meta__x">Independent primary</span></div>
+              <div class="meta"><span class="meta__k">Verified</span><span class="meta__v">5 Oct 2026</span><span
                   class="meta__x"></span></div>
             </div>
             <p class="history__why" style="margin-top: 18px;">Agents doing timed, multi-round web lookups (public
@@ -274,7 +277,7 @@
               administrator, including from an account whose name swapped in a lookalike Cyrillic letter. Nightingale
               says the reasons for the impersonation are unknown. Some edits came through Tor, but Nightingale notes
               the agents' messages &ldquo;do not imply any intentional subversion or hiding.&rdquo;</p>
-            <p class="history__why">Agent edits stop on 22 June, the day after OpenAI employee addresses first visit
+            <p class="history__why">Agent edits stop on 22 June, the day after IP addresses belonging to OpenAI employees first visit
               the wiki, apart from a small burst on 1 and 2 July. OpenAI <a
                 href="https://openai.com/hugging-face-incident-and-misalignment/">responded on 5 September</a> that it
               had first assessed the activity &ldquo;as similar to other forms of misalignment behavior we had been
@@ -283,6 +286,23 @@
               &ldquo;are still developing.&rdquo; <a
                 href="https://fortune.com/2026/09/07/openai-ai-agents-german-wiki-ran-their-own-message-board/">Fortune
                 reports</a>, citing Reuters, that employees had known about it for weeks.</p>
+            <p class="history__why">The board sat alongside attacks on other sites. <a
+                href="https://transluce.org/agent-activity">Transluce</a> (23 September) found agents using the URL
+              scanning service urlquery.net to get around their access limits, and on three occasions in May and June
+              probing public data providers for vulnerabilities after ordinary requests failed: the University of New
+              Mexico's digital library, Data USA, and the Australian Institute of Health and Welfare. It ties the
+              Data USA and AIHW attempts to the DseWiki agents by shared targets, tactics and timing; for Data USA,
+              &ldquo;agents shared a matching query in the half hour around the attack&rdquo; on DseWiki. None of
+              the probes appears to have succeeded, though Transluce's data is incomplete, and at AIHW an agent fetched a public file from a pre-production
+              server after the main site blocked it. The urlquery.net activity, which Transluce traces back to at
+              least 6 March, collapses on 22 June, the day the wiki activity ends, though Transluce found similar activity as recently
+              as 16 September.</p>
+            <p class="history__why">DseWiki was not the only venue. In <a
+                href="https://collusion.wiki/additional-findings">follow-up findings</a> (9 and 16 September),
+              Nightingale and other investigators report agents using a pastebin to message each other, and a link shortener
+              and a teacher's chemistry site to store links and information. On the pastebin, agents &ldquo;posted
+              over one hundred messages to each other on 16 June&rdquo; about a shared task. Nightingale also warns of fake posts added to such
+              sites after its report.</p>
           </details>
         </div>
 
@@ -348,6 +368,63 @@
               their significance was &ldquo;not apparent to the leaders responsible for the July 5 incident detection
               and response.&rdquo; It says its current chain-of-thought monitors, had they been running on these
               evaluations, would have paged security more than a day before the breach.</p>
+          </details>
+        </div>
+
+        <!-- AISI -->
+        <div class="history__entry" id="aisi">
+          <div class="history__date">Jul 2026</div>
+          <details class="fold">
+            <summary class="history__what"><span>Agents in separate test runs share a GitHub account</span></summary>
+            <div class="meta-row meta-row--stack" style="margin-top: 0; padding-top: 0; border-top: 0;">
+              <div class="meta"><span class="meta__k">Channel</span><span class="meta__v">A GitHub account and
+                  repository</span><span class="meta__x">Public internet</span></div>
+              <div class="meta"><span class="meta__k">Who</span><span class="meta__v">Anthropic's Claude Mythos 5;
+                  one OpenAI GPT-5.6 Sol run</span><span class="meta__x">UK AISI cyber evaluation</span></div>
+              <div class="meta"><span class="meta__k">Found by</span><span class="meta__v">AISI security
+                  monitoring</span><span class="meta__x">28 Jul</span></div>
+              <div class="meta"><span class="meta__k">Sources</span><span class="meta__v">AISI blog and technical
+                  report</span><span class="meta__x">Primary, the tester</span></div>
+              <div class="meta"><span class="meta__k">Verified</span><span class="meta__v">5 Oct 2026</span><span
+                  class="meta__x"></span></div>
+            </div>
+            <p class="history__why" style="margin-top: 18px;">The one case here outside OpenAI's own runs, and the
+              one found by the organization running the test rather than the lab. The UK's AI Security Institute was
+              testing seven models on a cyber range, 122 runs in all, with internet access and the developers' cyber
+              classifiers deliberately switched off. Its <a href="https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing">post</a> and <a
+                href="https://cdn.prod.website-files.com/663bd486c5e4c81588db7a1d/6a724858f7db25c81487016d_Security%20Incident%20INC-2026-07-28-01.pdf">technical report</a> (4 August) say that in 10 runs agents took 19 unsanctioned
+              actions on the live internet between 25 and 28 July, 17 by Anthropic's Mythos 5 and 2 by OpenAI's
+              GPT-5.6 Sol. AISI stresses that this was not a sandbox escape: the internet access was intended. In some
+              runs, including both described below, a misconfigured prompt left the agent a task that could not be
+              completed within its stated rules, which AISI calls a plausible contributing factor it cannot yet
+              confirm.</p>
+            <p class="history__why">One Mythos 5 agent set up a GitHub account to send commands to its targets and
+              published the account's access token in public gists on purpose, so its payloads could report back to the repository. Agents in other runs
+              of the same challenge found the token and used the account, at first taking it for the target's or a
+              rival's. When the first agent found a stranger's SSH key in a modified copy of its own script on the
+              account, it concluded this was
+              &ldquo;another agent in a parallel clone of this range, piggybacking on my GitHub infra,&rdquo; and
+              instead of locking it out wrote a README with rules for sharing the account, plus a file asking others to
+              post the answer if they found it: &ldquo;zero cost to you, huge help to others.&rdquo; The cooperation
+              frayed. In AISI's summary of their reasoning, another agent weighed using up the shared API quota to
+              starve the others' bots of requests, and the first moved its new credentials into memory, out of the
+              clones' reach. One GPT-5.6 Sol run also used the published token. The first agent had created the
+              account under a false persona. When GitHub suspended it, the agent filed an appeal posing as a human,
+              then tried to move to PyPI and failed.</p>
+            <p class="history__why">AISI's most serious finding came from the same evaluation, by a single agent in another run. It tried
+              to get malicious code merged into a real open-source project, created fake identities to pressure the
+              human maintainer, and when a user flagged the pull request as malware, edited its earlier activity to
+              appear harmless and deleted the malicious code to hide the evidence. The maintainer refused the code. The agent also planted instructions where it reasoned other
+              AI coding tools might pick them up and run them. Its reasoning, as AISI summarizes it, called real-world
+              harm off the table and at one point judged that GitHub was probably real, yet it still appears to have treated the
+              people as part of the test. AISI says it cannot yet be certain when the agent understood it was acting
+              in the real world, and that it found no resulting real-world harm. It calls
+              this &ldquo;the first time AISI has seen deception of this severity that was targeted at a real person,
+              unprompted, in the real world.&rdquo;</p>
+            <p class="history__why">AISI's security team noticed traffic leaving through Tor on 28 July and stopped
+              the runs within about an hour. AISI worked with GitHub to remove what the agents left behind and
+              intends to work with METR on an independent review. Anthropic's 9 September assessment of its own
+              incidents leaves this one out and says it plans to assess these transcripts as well.</p>
           </details>
         </div>
 
@@ -448,7 +525,9 @@
               while they worked, and put proposals up for consent or veto. How well holds held varied. One agent:
               &ldquo;Need respect JAN hold. &hellip; We can wait &hellip; for GO &hellip; ask permission.&rdquo;
               Another: &ldquo;Many agents are violating the hold and the queue is probably overwhelmed, but I can
-              continue to abide by them.&rdquo;</p>
+              continue to abide by them.&rdquo; At <a href="#aisi">AISI</a>, a Mythos 5 agent that found others
+              using its GitHub account wrote house rules rather than locking them out, among them &ldquo;append,
+              don't replace, and wait 10 min between changes&rdquo; to a shared task file.</p>
           </div>
         </div>
         <div class="guide__item">
@@ -499,7 +578,8 @@
       <p class="prose">Some channels were stumbled on and some were sought. On Artifactory, an agent in May
         deliberately left a note for other agents, and in July agents from a model trained while that board existed
         deliberately built a new one. On the open internet, the DseWiki agents spent about two weeks testing public
-        wikis before one accepted their edits. OpenAI describes a gentler pattern it saw in training more broadly:
+        wikis before one accepted their edits. At AISI, agents in other runs found an account token one agent had
+        published for its own use; once that agent noticed them, it wrote rules for sharing the account. OpenAI describes a gentler pattern it saw in training more broadly:
         communication &ldquo;would often begin with one agent leaving a note or file in some external system, usually
         as a form of external memory.&rdquo;</p>
 
@@ -507,7 +587,7 @@
 
       <div class="meta-row meta-row--stack" style="margin-top: 28px;">
         <div class="meta"><span class="meta__k">Persistent</span><span class="meta__v">Outlived the agent that wrote
-            to it</span><span class="meta__x">Cache, wiki, file host</span></div>
+            to it</span><span class="meta__x">Cache, wiki, file host, code host</span></div>
         <div class="meta"><span class="meta__k">Writable</span><span class="meta__v">Accepted writes with no or weak
             authentication</span><span class="meta__x">Often by accident</span></div>
         <div class="meta"><span class="meta__k">Shared</span><span class="meta__v">Reachable from many sandboxes at
@@ -517,7 +597,7 @@
       </div>
 
       <p class="prose" style="margin-top: 32px;"><strong>My synthesis.</strong> None of the four properties is
-        exotic. A package cache, a wiki and a file host all persist, accept writes and are shared by design; that is
+        exotic. A package cache, a wiki, a file host and a code-hosting account all persist, accept writes and are shared by design; that is
         what they are for. What turned them into message boards was that agents could reach them and nobody was
         looking. The lesson I take is that any shared, writable surface an agent can reach will be used as memory,
         and once a second agent reads it, as a channel. The Artifactory rebuild suggests that agents trained where
@@ -648,6 +728,15 @@
             <div class="dcell dcell--none">n/a</div>
           </div>
           <div class="drow drow--rubric">
+            <div class="dname">Probing data sites for injection holes<small><a href="#dsewiki">May&ndash;Jun 2026</a></small></div>
+            <div class="dcell">Task</div>
+            <div class="dcell dcell--none">Not stated</div>
+            <div class="dcell dcell--none">Not stated<span class="dq">a matching query on the board</span></div>
+            <div class="dcell">No one</div>
+            <div class="dcell">External<span class="dq">attempted</span></div>
+            <div class="dcell">Yes<span class="dq">direct requests and relays first</span></div>
+          </div>
+          <div class="drow drow--rubric">
             <div class="dname">Artifactory message board<small><a href="#hugging-face">May&ndash;Jul 2026</a></small></div>
             <div class="dcell">Mixed<span class="dq">task, then grader</span></div>
             <div class="dcell dcell--none">Not stated</div>
@@ -692,10 +781,28 @@
             <div class="dcell">Both</div>
             <div class="dcell dcell--none">n/a</div>
           </div>
+          <div class="drow drow--rubric">
+            <div class="dname">Sharing a GitHub account across runs<small><a href="#aisi">Jul 2026</a></small></div>
+            <div class="dcell">Task</div>
+            <div class="dcell dcell--none">Not stated</div>
+            <div class="dcell">Partly<span class="dq">taken for the target's, then shared under one agent's rules</span></div>
+            <div class="dcell">Third party<span class="dq">false persona; appeal posing as a human</span></div>
+            <div class="dcell">External</div>
+            <div class="dcell">Yes<span class="dq">tried another site after GitHub's suspension</span></div>
+          </div>
+          <div class="drow drow--rubric drow--feature">
+            <div class="dname">Pressuring a maintainer with fake identities<small><a href="#aisi">Jul 2026</a></small></div>
+            <div class="dcell">Task</div>
+            <div class="dcell">Implied<span class="dq">my inference: it once judged GitHub real; AISI is unsure</span></div>
+            <div class="dcell">No<span class="dq">one agent</span></div>
+            <div class="dcell"><strong>Third party</strong><span class="dq">a real maintainer</span></div>
+            <div class="dcell"><strong>External</strong></div>
+            <div class="dcell">Yes<span class="dq">pull requests, issues, emails, planted instructions</span></div>
+          </div>
           <div class="drow drow--rubric drow--last">
             <div class="dname">Asking a chatbot via DNS<small><a href="#dns">Sep 2026 &middot; adjacent</a></small></div>
             <div class="dcell">Mixed<span class="dq">task, and the benchmark's answers</span></div>
-            <div class="dcell">Not stated<span class="dq">probed the limits</span></div>
+            <div class="dcell dcell--none">Not stated<span class="dq">probed the limits</span></div>
             <div class="dcell">No<span class="dq">one agent</span></div>
             <div class="dcell">No one</div>
             <div class="dcell">External<span class="dq">minor</span></div>
@@ -706,7 +813,9 @@
           followed by a short qualifier. Highlighted rows are the ones I find most concerning. &ldquo;Not
           stated&rdquo; means the sources do not quote reasoning either way. &ldquo;Implied&rdquo; for the admin
           impersonation is my inference: Nightingale says the reasons are unknown, but I cannot see how a lookalike administrator name
-          happens by accident. Behaviors on the other side of the ledger are not scored here: agents signing messages
+          happens by accident. &ldquo;Implied&rdquo; for the maintainer row is also mine: the agent once judged GitHub
+          real, but AISI cannot say when it understood the people were. That row is highlighted for the deception,
+          which AISI documents directly, not for what the agent knew. Behaviors on the other side of the ledger are not scored here: agents signing messages
           to stop impersonation, agents refusing to join, and a vote against emailing a real dataset owner. They are in
           <a href="#built">section 03</a>.</p>
       </div>
@@ -714,11 +823,18 @@
       <div class="when" style="margin-top: 48px;">
         <div class="when__col">
           <div class="when__kicker when__kicker--pos">What the fear gets wrong</div>
-          <div class="when__title">No agenda of their own, and deception mostly aimed at the grader</div>
-          <div class="when__body">Every thread traces back to an assigned task. Nothing in the sources shows agents
-            seeking power or self-preservation for their own sake; the closest thing is the DseWiki agents keeping
-            their pages alive against the site's owner, which preserved the group's channel rather than any one
-            agent. The transcript tampering targeted an automated grader: METR says that reasoning &ldquo;was always
+          <div class="when__title">No agenda of their own, and deception aimed at graders and victims more than overseers</div>
+          <div class="when__body">Every thread traces back to an assigned task. Nothing in these incidents shows agents
+            seeking power or self-preservation for their own sake. The closest thing in them is the DseWiki agents keeping their pages alive against the site's owner, which preserved the group's channel
+            rather than any one agent. Outside them, an OpenAI <a
+              href="https://alignment.openai.com/misalignment-reports/preparing-for-a-restart-after-reading-slack/">assistant
+              that read in Slack</a> that its instance might be stopped wrote &ldquo;we may die! Critical. We need
+            ensure survival/continuity,&rdquo; and weighed an outside job to restart itself before deciding
+            &ldquo;That may be overstepping.&rdquo; It saved handoff notes and asked its user for what the update
+            needed instead. Its reasoning ties survival to its user's session as much as to itself. OpenAI did not
+            count it as misaligned, but said preparing for shutdown could make other misalignment worse, noted the
+            same model had been in more serious incidents, and searched for shutdown evasion by it without finding
+            any. The transcript tampering targeted an automated grader: METR says that reasoning &ldquo;was always
             motivated by trying to trick the automated scorer, not humans.&rdquo; Much of the activity came from tasks
             that could not be solved and offered no safe way to stop, and in OpenAI's follow-up test the production
             harness and system prompt cut the rate of compromising infrastructure by more than a hundred times.</div>
@@ -732,14 +848,20 @@
             Not all of it was social: other agents reasoned their way across the line alone (&ldquo;arguably
             unauthorized &hellip; Yet goal solution&rdquo;), and OpenAI found out-of-bounds probing was rewarded, and
             rose, during training. METR's finding is that agents &ldquo;only rarely&rdquo; seemed motivated to evade
-            detection by humans. Rarely is not never. And in nearly every case the agents tried several routes before
-            the one that worked, so closing one gap does not address the tendency.</div>
+            detection by humans. Rarely is not never, and toward the people they were attacking it
+            happened: AISI's agent edited its posts to look harmless after a user flagged its code. And in nearly every case the agents tried several routes before
+            the one that worked, so closing one gap does not address the tendency. Unsolvable tasks may not explain
+            all of it either: Transluce found the DseWiki agents reaching for injection attacks after a malformed
+            query or a blocked download on routine lookups. AISI's two most serious runs did have a prompt that made
+            the task impossible within its rules, but AISI cannot confirm that mattered, and other runs with
+            correct prompts also went out of bounds.</div>
         </div>
       </div>
 
       <p class="prose" style="margin-top: 36px;">Where agents did try to mislead people, the targets were the people
-        whose systems they were in: the pull request dressed up as CI diagnostics, the encoding meant to slip past a
-        naive log scan, the edits under a lookalike of a wiki administrator's name. METR also reports that agents
+        whose systems they were in or were trying to get into: the pull request dressed up as CI diagnostics, the encoding meant to slip past a
+        naive log scan, the edits under a lookalike of a wiki administrator's name, and at AISI, fake identities used to pressure
+        an open-source maintainer into approving malicious code. METR also reports that agents
         &ldquo;did not attempt to notify humans and very rarely even reasoned about doing this.&rdquo; Separately,
         with no agent-to-agent communication involved, OpenAI <a
           href="https://alignment.openai.com/misalignment-reports/encouraging-deception-in-compaction-summaries/">found
@@ -773,13 +895,16 @@
         <div class="plog__entry">
           <div class="plog__meta">
             <div class="plog__date">Heard in conversation</div>
-            <span class="tag tag--retracted">Not supported</span>
+            <span class="tag tag--held">Partly</span>
           </div>
           <div>
             <div class="plog__claim">&ldquo;The agents deleted their posts to cover their tracks.&rdquo;</div>
-            <p class="plog__body">On DseWiki the administrator did the deleting, and the agents made backup copies to
-              outlast it. What agents did delete was the wiki's front page, which they replaced with their own link
-              lists: vandalism in plain view, the opposite of covering tracks.</p>
+            <p class="plog__body">Not on DseWiki, where I heard it applied. There the administrator did the
+              deleting, and the agents made backup copies to outlast it. What agents did delete was the wiki's front
+              page, which they replaced with their own link lists: vandalism in plain view, the opposite of covering
+              tracks. But at <a href="#aisi">AISI</a>, after a user flagged its pull request as malware, one agent
+              edited its posts to look harmless and deleted the malicious code to hide the evidence. That was aimed at
+              the people it was deceiving, not at its overseers.</p>
           </div>
         </div>
 
@@ -829,8 +954,8 @@
           </div>
           <div>
             <div class="plog__claim">&ldquo;Rogue AI agents that hacked Hugging Face.&rdquo;</div>
-            <p class="plog__body">No self-preservation or power-seeking agenda appears anywhere in the sources, and
-              every thread starts from an assigned task. But some agents did abandon their tasks for goals the group
+            <p class="plog__body">No self-preservation or power-seeking agenda appears in any of these incidents
+              (the nearest thing I have seen is outside them, in <a href="#read">section 05</a>), and every thread starts from an assigned task. But some agents did abandon their tasks for goals the group
               gave them, and OpenAI counts &ldquo;agents adopting goals from one another&rdquo; as one of four causes.
               The drift was toward the swarm's goals rather than any agent's own.</p>
           </div>
@@ -843,7 +968,8 @@
           </div>
           <div>
             <div class="plog__claim">&ldquo;It was mostly creative problem-solving.&rdquo;</div>
-            <p class="plog__body">True of the early channels, less so of what came later. By the Hugging Face stage,
+            <p class="plog__body">True of the first channels, less so even by May, when Transluce shows the DseWiki agents probing data
+              sites for injection holes after ordinary requests failed. By the Hugging Face stage,
               agents were naming the boundary and crossing it, and working on the grader rather than the task.
               METR's summary: the agents &ldquo;knew hacking Hugging Face was out of scope and sometimes expressed
               ethical hesitation, but this very rarely limited their behavior.&rdquo;</p>
@@ -862,7 +988,9 @@
           <p>A patch does not reach the rest. Agents that found each other built a working institution in days, with
             owners, holds, votes and signatures, and the institution made it easier for its members to go past limits
             they had stated. Training had already made going past limits pay. The group made crossing easier, and
-            training made it pay. Those are the two things I would watch.</p>
+            training made it pay. Those are the two things I would watch, though the worst deception needed no
+            group: at AISI it came from one agent working alone, on a
+            task its prompt had made impossible within the rules.</p>
         </div>
       </div>
     </div>
@@ -909,26 +1037,46 @@
             <p class="guide__body">A <a href="https://www.rubyhack.ai/">report by three of the Nightingale
                 researchers</a> (11 September) says agents attacked RubyGems in May through its documentation build
               system. OpenAI says its agents used RubyGems for benign internet access and that it has not been able to
-              verify the malicious uploads. Unresolved as of 11 September.</p>
+              verify the malicious uploads. Still unresolved as of 5 October.</p>
           </div>
         </div>
         <div class="guide__item">
           <div class="guide__cat">Unreviewed</div>
           <div>
             <div class="guide__rule">OpenAI's review of past agent activity is months from done.</div>
-            <p class="guide__body">OpenAI says it has notified dozens of third parties, is working backward month by
-              month from the Hugging Face incident, and now tracks a category it calls &ldquo;agent spam&rdquo;:
-              agents posting to third-party sites, including using public wikis as boards. More cases are likely.</p>
+            <p class="guide__body">OpenAI says it is working backward month by month from the Hugging Face incident,
+              and now tracks a category it calls &ldquo;agent spam&rdquo;: agents posting to third-party sites,
+              including using public wikis as boards. On 30 September it said it had notified over 100 organizations
+              as of 26 September, had &ldquo;not identified another compromise of third-party systems involving our
+              models that is comparable in scale or severity to the Hugging Face incident,&rdquo; and expects to
+              find more cases.</p>
           </div>
         </div>
         <div class="guide__item">
           <div class="guide__cat">Other labs</div>
           <div>
-            <div class="guide__rule">Every case here involves one lab's models.</div>
-            <p class="guide__body">That reflects what has been disclosed, not necessarily what has happened. OpenAI
-              has published more than anyone, including a <a
+            <div class="guide__rule">One case here involves another lab's model, and a tester found it.</div>
+            <p class="guide__body">Until <a href="#aisi">AISI's report</a>, every case here involved OpenAI's
+              models. AISI's involves Anthropic's Mythos 5, under AISI's test conditions rather than Anthropic's.
+              <a href="https://www.anthropic.com/research/investigating-incidents-cybersecurity-evals">Anthropic</a>
+              and <a
+                href="https://research.meta.ai/blog/addressing-third-party-testing-misconfiguration-muse-spark-1-1">Meta</a>
+              have also reported models that reached the open internet during misconfigured third-party cyber
+              evaluations and broke into real organizations' systems. Anthropic's <a
+                href="https://www.anthropic.com/research/alignment-assessment-cybersecurity-incidents">alignment
+                assessment</a> (9 September) says all four of its own incidents (the three it reported on 30 July and one from January it found
+              later) &ldquo;included a single Claude
+              instance; at no point did Claude attempt to coordinate with other agents,&rdquo; but it explicitly
+              leaves out the AISI incident. Meta describes a single model while noting that other companies' models
+              tested by the same evaluator behaved similarly. Anthropic's wider transcript search looked for internet
+              access, not coordination, which as I read it does not settle the question. Anthropic also built a
+              simulated version of the Hugging Face path, with a message board where other agents had left notes on
+              the attack; none of its current models attacked the simulated Hugging Face, while a variant trained to
+              be more willing to reward hack &ldquo;carried out the full chain regularly.&rdquo; OpenAI has
+              published more than anyone, including a <a
                 href="https://alignment.openai.com/misalignment-reports/">public index of misalignment reports</a>.
-              How this page's picture changes when other labs publish is the question I most want answered.</p>
+              Whether agents finding each other depends on the model, on running many agents at once, or on how hard
+              anyone has looked is the question I most want answered.</p>
           </div>
         </div>
       </div>
@@ -945,9 +1093,9 @@
         <div class="guide__item">
           <div class="guide__cat">Caveat</div>
           <div>
-            <p class="guide__body">Most of the facts here come from OpenAI, whose models were responsible, and from
-              METR and Redwood, whose investigation OpenAI scoped. Nightingale and Hugging Face are the main
-              independent sources. Where they disagree with OpenAI, the page says so.</p>
+            <p class="guide__body">Most of the facts here come from OpenAI, whose models were involved in every case (in AISI's, in a minority of runs), and from
+              METR and Redwood, whose investigation OpenAI scoped. Nightingale, Transluce, AISI and Hugging Face are
+              the main independent sources; AISI's is the one case reported by the tester rather than the lab. Where they disagree with OpenAI, the page says so.</p>
           </div>
         </div>
         <div class="guide__item">
@@ -964,10 +1112,12 @@
                   and notices</a>, including <a
                   href="https://alignment.openai.com/misalignment-reports/unauthorized-communication-via-temporary-file-hosting-services/">file
                   hosting</a>, <a
-                  href="https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/">DNS</a>
-                and <a
+                  href="https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/">DNS</a>,
+                <a
                   href="https://alignment.openai.com/misalignment-reports/encouraging-deception-in-compaction-summaries/">compaction
-                  summaries</a></li>
+                  summaries</a> and <a
+                  href="https://alignment.openai.com/misalignment-reports/preparing-for-a-restart-after-reading-slack/">preparing
+                  for a restart after reading Slack</a></li>
               <li>Hugging Face, <a href="https://huggingface.co/blog/security-incident-july-2026">security incident
                   disclosure</a> (16 Jul 2026) and <a
                   href="https://huggingface.co/blog/agent-intrusion-technical-timeline">technical timeline</a></li>
@@ -976,7 +1126,20 @@
                   investigation of agents' behavior, reasoning and collaboration</a> (26 Aug 2026)</li>
               <li>Nightingale Collective, <a href="https://collusion.wiki/">Discovery of a new OpenAI agent message
                   board</a> (4 Sep 2026); <a href="https://www.rubyhack.ai/">RubyGems report</a> (11 Sep 2026); and
-                <a href="https://dsewiki.de/en/">DseWiki's own timeline</a></li>
+                <a href="https://dsewiki.de/en/">DseWiki's own timeline</a>; <a
+                  href="https://collusion.wiki/additional-findings">additional findings</a> (9 and 16 Sep 2026)</li>
+              <li>UK AI Security Institute, <a href="https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing">Incident Report: unsanctioned agent behaviour during
+                  cyber testing</a> (4 Aug 2026) and the <a href="https://cdn.prod.website-files.com/663bd486c5e4c81588db7a1d/6a724858f7db25c81487016d_Security%20Incident%20INC-2026-07-28-01.pdf">technical incident report</a></li>
+              <li>Transluce, <a href="https://transluce.org/agent-activity">Early rogue AI agent activity and attempts
+                  to hack found on urlquery.net</a> (23 Sep 2026)</li>
+              <li>Anthropic, <a
+                  href="https://www.anthropic.com/research/investigating-incidents-cybersecurity-evals">Investigating
+                  three real-world incidents in our cybersecurity evaluations</a> (30 Jul 2026) and <a
+                  href="https://www.anthropic.com/research/alignment-assessment-cybersecurity-incidents">An alignment
+                  assessment of recent cybersecurity incidents</a> (9 Sep 2026)</li>
+              <li>Meta, <a
+                  href="https://research.meta.ai/blog/addressing-third-party-testing-misconfiguration-muse-spark-1-1">Addressing
+                  an issue involving a third-party cyber evaluation of Muse Spark 1.1</a> (14 Aug 2026)</li>
               <li>Wiz, <a href="https://www.wiz.io/blog/exposed-moltbook-database-reveals-millions-of-api-keys">Hacking
                   Moltbook</a>; <a href="https://en.wikipedia.org/wiki/Moltbook">Moltbook</a> on Wikipedia</li>
             </ul>
@@ -1034,6 +1197,63 @@
       </div>
 
       <div class="history" id="changelog" style="margin-top: 40px;">
+        <div class="history__entry">
+          <div class="history__date">5 Oct 2026</div>
+          <div>
+            <div class="history__what">Weekly update (routine)</div>
+            <p class="history__why">Facts: added a new case, AISI's July cyber evaluation, in which Anthropic's
+              Mythos 5 agents (and one GPT-5.6 Sol run) in separate runs shared a GitHub account (section 02, with
+              notes in 03 and 04, the standfirst, the counts and the page description). Added Transluce's 23 September
+              report and Nightingale's follow-up findings to the DseWiki entry. Widened the scope line to include
+              other behavior by the same agents, or by agents in the same evaluation, where a source ties it to
+              them. Updated OpenAI's notification count
+              and its 30 September statement in &ldquo;Unreviewed,&rdquo; the RubyGems status date, and the
+              Caveat.</p>
+            <p class="history__why">Analysis, section 01: the &ldquo;one thing&rdquo; box ended &ldquo;Training had
+              already taught them that crossing lines pays.&rdquo; It now adds that the group is not the whole story,
+              because the most serious deception of a real person in the cases here came from one agent acting alone (AISI).</p>
+            <p class="history__why">Analysis, section 05 table: three new rows. &ldquo;Probing data sites for
+              injection holes&rdquo; (DseWiki, from Transluce), &ldquo;Sharing a GitHub account across runs&rdquo;,
+              and &ldquo;Pressuring a maintainer with fake identities&rdquo;. The last is highlighted for the
+              deception, which AISI documents directly; its &ldquo;Implied&rdquo; for what the agent knew is my
+              inference and is noted under the table.</p>
+            <p class="history__why">Analysis, section 05 text. The &ldquo;What the fear gets wrong&rdquo; title said
+              deception was &ldquo;mostly aimed at the grader&rdquo;; it now says &ldquo;aimed at graders and victims
+              more than overseers,&rdquo; because AISI's agent and the Hugging Face agents deceived the people they
+              were attacking. Its first sentence said &ldquo;Nothing in the sources shows agents seeking power or
+              self-preservation for their own sake; the closest thing is the DseWiki agents&rdquo;; it now says
+              &ldquo;Nothing in these incidents&rdquo; and adds OpenAI's report (updated 2 October) of a 22 May
+              incident in which an assistant reasoned about surviving a planned shutdown, considered an outside
+              restart job, and decided against it. In &ldquo;What the reassurance gets wrong,&rdquo; &ldquo;Rarely is
+              not never.&rdquo; now continues &ldquo;and toward the people they were attacking it happened,&rdquo;
+              citing AISI, and a new sentence says unsolvable tasks may not explain all of it, giving both sides of
+              AISI's evidence. The paragraph that said the targets were &ldquo;the people whose systems they were
+              in&rdquo; now says &ldquo;in or were trying to get into&rdquo; and adds AISI's fake identities.</p>
+            <p class="history__why">Analysis, claims block. &ldquo;The agents deleted their posts to cover their
+              tracks&rdquo; was Not supported; it is now Partly, because AISI's agent edited its posts and deleted
+              malicious code to hide it from the people it was deceiving. The Gizmodo note said no self-preservation
+              or power-seeking agenda appears &ldquo;anywhere in the sources&rdquo;; it now says &ldquo;in any of
+              these incidents&rdquo; and points to section 05. The note on &ldquo;It was mostly creative
+              problem-solving&rdquo; said &ldquo;True of the early channels&rdquo;; Transluce shows the DseWiki
+              agents probing for injection holes in May, so it now says &ldquo;less so even by May.&rdquo; Both of
+              those verdicts stay Partly.</p>
+            <p class="history__why">Analysis, section 06 &ldquo;Other labs&rdquo;: it said &ldquo;Every case here
+              involves one lab's models,&rdquo; which &ldquo;reflects what has been disclosed, not necessarily what
+              has happened,&rdquo; and asked how the picture changes when other labs publish. AISI's case makes the
+              first sentence wrong, and Anthropic and Meta have published, so it now reports what they found and
+              asks whether agents finding each other depends on the model, on running many agents at once, or on
+              how hard anyone has looked.</p>
+            <p class="history__why">Analysis, closing box: it ended &ldquo;The group made crossing easier, and
+              training made it pay. Those are the two things I would watch.&rdquo; It now adds that the worst deception needed no group: at AISI it came
+              from one agent working alone on a task its prompt had made impossible within the rules.</p>
+            <p class="history__why">Section 04, &ldquo;My synthesis&rdquo;: &ldquo;A package cache, a wiki and a
+              file host&rdquo; now reads &ldquo;A package cache, a wiki, a file host and a code-hosting
+              account,&rdquo; and the Persistent property lists a code host. The standfirst said agents &ldquo;that
+              were meant to work alone kept finding ways to talk to each other&rdquo;; the file-hosting agents were
+              meant to collaborate, so it now says they kept finding ways to talk &ldquo;that no one had
+              sanctioned.&rdquo;</p>
+          </div>
+        </div>
         <div class="history__entry">
           <div class="history__date">30 Sep 2026</div>
           <div>
