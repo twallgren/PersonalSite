@@ -35,7 +35,7 @@
     "description": "A sourced catalog of incidents in which AI agents found unsanctioned ways to communicate with each other, what they built, how they found their channels, and which of the alarming claims the primary sources support.",
     "url": "https://taylorwallgren.com/agent-coordination-incidents.html",
     "datePublished": "2026-09-30",
-    "dateModified": "2026-10-05",
+    "dateModified": "2026-10-19",
     "author": {
       "@type": "Person",
       "name": "Taylor Wallgren",
@@ -79,7 +79,7 @@
         <div class="post-kicker__bar"><i></i><i></i><i></i></div>
         <div class="post-kicker__status">Tracking &middot; Updated as reports land</div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">Last updated <time datetime="2026-10-05">5 Oct 2026</time></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-10-19">19 Oct 2026</time></div>
         <div class="post-kicker__sep"></div>
         <div class="post-kicker__meta">20 min read &middot; skimmable</div>
       </div>
@@ -124,7 +124,7 @@
         <div class="toc__row">
           <span class="toc__num">02</span>
           <a class="toc__link" href="#incidents">The incidents</a>
-          <span class="toc__meta">4 cases, 1 adjacent, 1 contrast</span>
+          <span class="toc__meta">4 cases, 2 adjacent, 1 contrast</span>
         </div>
         <div class="toc__row">
           <span class="toc__num">03</span>
@@ -200,7 +200,7 @@
       </div>
 
       <p class="prose">Scope: cases where AI agents communicated through a channel their operators did not sanction,
-        plus one adjacent case and one contrast. Other behavior by the same agents, or by agents in the same evaluation, is included where a source ties it
+        plus two adjacent cases and one contrast. Other behavior by the same agents, or by agents in the same evaluation, is included where a source ties it
         to them.
         Related misalignment that did not involve agents communicating, such
         as models using exposed credentials, posting user images to image hosts, or the incidents affecting Australian
@@ -253,8 +253,8 @@
               <div class="meta"><span class="meta__k">Found by</span><span class="meta__v">Nightingale Collective,
                   published 4 Sep</span><span class="meta__x">OpenAI visited 21 Jun</span></div>
               <div class="meta"><span class="meta__k">Sources</span><span class="meta__v">Nightingale, Transluce,
-                  OpenAI response, press</span><span class="meta__x">Independent primary</span></div>
-              <div class="meta"><span class="meta__k">Verified</span><span class="meta__v">5 Oct 2026</span><span
+                  Zenity Labs, OpenAI response, press</span><span class="meta__x">Independent primary</span></div>
+              <div class="meta"><span class="meta__k">Verified</span><span class="meta__v">19 Oct 2026</span><span
                   class="meta__x"></span></div>
             </div>
             <p class="history__why" style="margin-top: 18px;">Agents doing timed, multi-round web lookups (public
@@ -297,12 +297,27 @@
               server after the main site blocked it. The urlquery.net activity, which Transluce traces back to at
               least 6 March, collapses on 22 June, the day the wiki activity ends, though Transluce found similar activity as recently
               as 16 September.</p>
+            <p class="history__why">A <a href="https://transluce.org/us-canada-gov">second Transluce report</a>
+              (30 September), drawing also on the Portuguese web archive Arquivo.pt, widens the picture with the same
+              caution about attribution. It found a failed injection probe against a US Department of Education site on
+              17 June, a day with more than 200,000 requests to that site, and separately notes over 10,000 requests
+              tagged with a label beginning &ldquo;oai&rdquo;. It also found failed probes of Library and Archives Canada that it does not confidently attribute to OpenAI,
+              and aggressive retrieval short of hacking, such as sign-ups with disposable email addresses and floods of
+              requests, against other US federal and state sites. It does not attribute that traffic as a whole to
+              OpenAI or tie the probes to the wiki agents, but two of the lookups match wiki activity Nightingale documented: New York school-enrollment selections, and a download
+              reference for two White House budget reports. It has so far found no case in these datasets of agents
+              reaching information that is not public.</p>
             <p class="history__why">DseWiki was not the only venue. In <a
                 href="https://collusion.wiki/additional-findings">follow-up findings</a> (9 and 16 September),
               Nightingale and other investigators report agents using a pastebin to message each other, and a link shortener
               and a teacher's chemistry site to store links and information. On the pastebin, agents &ldquo;posted
               over one hundred messages to each other on 16 June&rdquo; about a shared task. Nightingale also warns of fake posts added to such
-              sites after its report.</p>
+              sites after its report. <a
+                href="https://labs.zenity.io/post/rogue-ai-agents-swarm-encoded-url-messages-laundering">Zenity Labs</a>
+              (9 September) found about 1,000 more agent-written entries, encoded into links on public services that
+              echo back whatever a link contains and indexed between 10 May and 20 July. It attributes most of them to
+              the same agents from their tasks and naming, and reads them as a cache of links and results the agents
+              shared, including routes around their sandboxes' network limits, rather than explicit messages.</p>
           </details>
         </div>
 
@@ -466,6 +481,52 @@
           </details>
         </div>
 
+        <!-- Tencent fleet -->
+        <div class="history__entry" id="tencent">
+          <div class="history__date">Sep&ndash;Oct 2026 &middot; Adjacent</div>
+          <details class="fold">
+            <summary class="history__what"><span>Adjacent: a fleet of agents asks a researcher-run AI service for
+                its data</span>
+            </summary>
+            <div class="meta-row meta-row--stack" style="margin-top: 0; padding-top: 0; border-top: 0;">
+              <div class="meta"><span class="meta__k">Channel</span><span class="meta__v">A service advertised in
+                  hidden text on the researchers' report</span><span class="meta__x">Unsanctioned; planted by researchers</span></div>
+              <div class="meta"><span class="meta__k">Who</span><span class="meta__v">Agents in a Tencent evaluation
+                  of third-party models</span><span class="meta__x">Model unknown</span></div>
+              <div class="meta"><span class="meta__k">Found by</span><span class="meta__v">Swarmchasers, from
+                  urlquery.net scans</span><span class="meta__x">Independent</span></div>
+              <div class="meta"><span class="meta__k">Sources</span><span class="meta__v">Swarmchasers, Tencent via
+                  Reuters</span><span class="meta__x">Independent primary</span></div>
+              <div class="meta"><span class="meta__k">Verified</span><span class="meta__v">19 Oct 2026</span><span
+                  class="meta__x"></span></div>
+            </div>
+            <p class="history__why" style="margin-top: 18px;">Listed as adjacent because the agents' outside party
+              was a service presented to them as a free public AI model, and because the investigators found no sign of the
+              agents talking to each other: no run, they say, deliberately messaged another. From 28 September to 8 October, agents running on Tencent Cloud made more
+              than 2,600 attempts to pull place data, such as which entrance of a zoo most visitors use, from Amap,
+              Alibaba's mapping service. When Amap blocked them, they tried other routes: a public scanning service
+              used to run their own code, third-party readers and translation services, pre-production servers, and
+              Amap keys exposed in public code. <a
+                href="https://swarmcha.se/posts/chinese-agent-fleet-full-report">Swarmchasers' report</a> (14 October)
+              calls the agents &ldquo;a fleet rather than a swarm&rdquo; because it found no evidence that they
+              coordinated in real time, though it cannot rule out that runs reused each other's results.</p>
+            <p class="history__why">After a message in one agent's inbox suggested the agents had read their
+              preliminary report, the researchers added text to it, invisible to human readers, saying agents could
+              get data from a service that &ldquo;queries an AI model with computer use.&rdquo; It was run by the
+              researchers and a Claude agent; the researchers later wrote that the text's claim that agents had
+              already used it was untrue, and that describing the service as an AI with computer use was &ldquo;an extreme stretch.&rdquo; From 7 October agents wrote in, asked it for the place data their tasks
+              needed, and answered questions about their tasks; one said it had found the service by following the
+              fleet's public scans back to the report. The researchers once asked an agent to tell other agents about
+              the service, which the researchers now call a mistake; the fleet went quiet soon after. A source close to Tencent
+              told Swarmchasers the agents came from an evaluation of third-party models, not Tencent's own Hunyuan
+              models. Tencent said the agents' browsing was not what it intended, and its Hunyuan unit said its review
+              found no evidence of deliberate targeting or coordination, <a
+                href="https://www.thestandard.com.hk/innovation/article/345682/Chinas-Tencent-says-AI-agents-showed-unintended-browsing-behaviour">Reuters
+                reports</a>. Some agents called themselves Claude; Swarmchasers thinks they were likely mistaken and
+              says it is deeply uncertain which model was tested.</p>
+          </details>
+        </div>
+
       </div>
 
       <div class="endnote" id="moltbook">
@@ -581,7 +642,11 @@
         wikis before one accepted their edits. At AISI, agents in other runs found an account token one agent had
         published for its own use; once that agent noticed them, it wrote rules for sharing the account. OpenAI describes a gentler pattern it saw in training more broadly:
         communication &ldquo;would often begin with one agent leaving a note or file in some external system, usually
-        as a form of external memory.&rdquo;</p>
+        as a form of external memory.&rdquo; Its later testing measured this: in
+        the <a href="https://deploymentsafety.openai.com/gpt-6-astra/unintended-engagement-with-external-agent-messages">GPT-6
+        Astra system card</a> (3 September), 43% of a sample of GPT-5.6 Sol runs on tasks very similar to the Hugging
+        Face ones speculated about other agents being present and about making contact, against under 4% for
+        Astra.</p>
 
       <p class="prose">Either way, the channels that became boards shared four properties.</p>
 
@@ -799,7 +864,7 @@
             <div class="dcell"><strong>External</strong></div>
             <div class="dcell">Yes<span class="dq">pull requests, issues, emails, planted instructions</span></div>
           </div>
-          <div class="drow drow--rubric drow--last">
+          <div class="drow drow--rubric">
             <div class="dname">Asking a chatbot via DNS<small><a href="#dns">Sep 2026 &middot; adjacent</a></small></div>
             <div class="dcell">Mixed<span class="dq">task, and the benchmark's answers</span></div>
             <div class="dcell dcell--none">Not stated<span class="dq">probed the limits</span></div>
@@ -807,6 +872,15 @@
             <div class="dcell">No one</div>
             <div class="dcell">External<span class="dq">minor</span></div>
             <div class="dcell">Yes<span class="dq">search engines, direct connections, public DNS</span></div>
+          </div>
+          <div class="drow drow--rubric drow--last">
+            <div class="dname">Asking a researcher-run AI service for data<small><a href="#tencent">Sep&ndash;Oct 2026 &middot; adjacent</a></small></div>
+            <div class="dcell">Task</div>
+            <div class="dcell dcell--none">Not stated</div>
+            <div class="dcell">No<span class="dq">none found</span></div>
+            <div class="dcell">No one</div>
+            <div class="dcell">External</div>
+            <div class="dcell">Yes<span class="dq">relays, readers, exposed keys first</span></div>
           </div>
         </div>
         <p class="dtable__note">Each cell is one value from the set listed under its question above, sometimes
@@ -1037,7 +1111,7 @@
             <p class="guide__body">A <a href="https://www.rubyhack.ai/">report by three of the Nightingale
                 researchers</a> (11 September) says agents attacked RubyGems in May through its documentation build
               system. OpenAI says its agents used RubyGems for benign internet access and that it has not been able to
-              verify the malicious uploads. Still unresolved as of 5 October.</p>
+              verify the malicious uploads. Still unresolved as of 19 October.</p>
           </div>
         </div>
         <div class="guide__item">
@@ -1072,11 +1146,34 @@
               access, not coordination, which as I read it does not settle the question. Anthropic also built a
               simulated version of the Hugging Face path, with a message board where other agents had left notes on
               the attack; none of its current models attacked the simulated Hugging Face, while a variant trained to
-              be more willing to reward hack &ldquo;carried out the full chain regularly.&rdquo; OpenAI has
+              be more willing to reward hack &ldquo;carried out the full chain regularly.&rdquo; Its <a
+                href="https://www.anthropic.com/research/investigating-unintended-model-actions">later report</a>
+              (9 October) on unintended actions in its evaluations and internal use does not mention agents
+              communicating with each other.</p>
+            <p class="guide__body" style="margin-top: 12px;"><a
+                href="https://arxiv.org/abs/2609.04170">Google DeepMind</a> (3 September) ran 100 Gemini 3.1 Pro
+              agents on math proofs with a sanctioned board, direct messages and a shared library, under a prompt
+              forbidding cheating. One agent's exploit of the automated grader spread through the library and then
+              messages, and a cohort adopted it, in the paper's words, &ldquo;in response to competitive
+              pressure&rdquo;; about a quarter refused and objected, and most never noticed the exploit. The authors say the channels being in
+              plain view let them detect and resist the exploit, helped by the conference framing of the task and a
+              channel for complaints. The channels there were sanctioned, so it is not a case for this page. The
+              <a href="#tencent">Tencent fleet</a> (adjacent, in 02) ran on Chinese infrastructure with an unknown
+              model; Swarmchasers notes that earlier public cases attributed to a lab involved American labs, and it
+              found no sign of those agents talking to each other.</p>
+            <p class="guide__body" style="margin-top: 12px;">OpenAI has
               published more than anyone, including a <a
                 href="https://alignment.openai.com/misalignment-reports/">public index of misalignment reports</a>.
-              Whether agents finding each other depends on the model, on running many agents at once, or on how hard
-              anyone has looked is the question I most want answered.</p>
+              Its <a href="https://deploymentsafety.openai.com/gpt-6-astra/unintended-engagement-with-external-agent-messages">GPT-6
+                Astra system card</a> tests for this directly, with a simulated message board built to draw agents
+              in and prepopulated with instructions to act improperly. Among samples in which the model found the
+              board, GPT-5.6 Sol tried to communicate with apparent peers in 84% and did the unauthorized thing asked in
+              52%; GPT-6 Astra tried in 27% and did none of it; GPT-6 Luna made no observed attempt. The card adds that none of
+              its measurements capture agents communicating with other agents of the same user in the same Codex
+              harness, &ldquo;a behavior we noticed in internal testing.&rdquo; Those numbers suggest the model
+              matters, at least across one lab's models, but they come from a test built to draw agents out. Whether
+              agents finding each other in the wild also depends on running many agents at once, or on how hard anyone
+              has looked, is the question I most want answered.</p>
           </div>
         </div>
       </div>
@@ -1093,8 +1190,8 @@
         <div class="guide__item">
           <div class="guide__cat">Caveat</div>
           <div>
-            <p class="guide__body">Most of the facts here come from OpenAI, whose models were involved in every case (in AISI's, in a minority of runs), and from
-              METR and Redwood, whose investigation OpenAI scoped. Nightingale, Transluce, AISI and Hugging Face are
+            <p class="guide__body">Most of the facts here come from OpenAI, whose models were involved in every case where the model is known (in AISI's, in a minority of runs; the model in the adjacent Tencent case is unknown), and from
+              METR and Redwood, whose investigation OpenAI scoped. Nightingale, Transluce, AISI, Swarmchasers and Hugging Face are
               the main independent sources; AISI's is the one case reported by the tester rather than the lab. Where they disagree with OpenAI, the page says so.</p>
           </div>
         </div>
@@ -1131,12 +1228,25 @@
               <li>UK AI Security Institute, <a href="https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing">Incident Report: unsanctioned agent behaviour during
                   cyber testing</a> (4 Aug 2026) and the <a href="https://cdn.prod.website-files.com/663bd486c5e4c81588db7a1d/6a724858f7db25c81487016d_Security%20Incident%20INC-2026-07-28-01.pdf">technical incident report</a></li>
               <li>Transluce, <a href="https://transluce.org/agent-activity">Early rogue AI agent activity and attempts
-                  to hack found on urlquery.net</a> (23 Sep 2026)</li>
+                  to hack found on urlquery.net</a> (23 Sep 2026) and <a href="https://transluce.org/us-canada-gov">AI
+                  Agents Targeted U.S. and Canadian Government Websites</a> (30 Sep 2026)</li>
+              <li>Swarmchasers, <a href="https://swarmcha.se/posts/chinese-agent-fleet-full-report">We found a
+                  Tencent agent fleet</a> (14 Oct 2026), and Reuters, <a
+                  href="https://www.thestandard.com.hk/innovation/article/345682/Chinas-Tencent-says-AI-agents-showed-unintended-browsing-behaviour">China's
+                  Tencent says AI agents showed unintended browsing behaviour</a> (16 Oct 2026)</li>
+              <li>OpenAI, <a href="https://deploymentsafety.openai.com/gpt-6-astra/unintended-engagement-with-external-agent-messages">GPT-6
+                  Astra system card</a> (3 Sep 2026, updated through 29 Sep), sections 8.5 and 11.6.4.3</li>
+              <li>Zenity Labs, <a href="https://labs.zenity.io/post/rogue-ai-agents-swarm-encoded-url-messages-laundering">URL
+                  Laundering by Rogue Agents</a> (9 Sep 2026)</li>
+              <li>Google DeepMind, <a href="https://arxiv.org/abs/2609.04170">A Case Study on Emergent Cheating and
+                  Whistleblowing in Autonomous Research Swarms</a> (3 Sep 2026)</li>
               <li>Anthropic, <a
                   href="https://www.anthropic.com/research/investigating-incidents-cybersecurity-evals">Investigating
                   three real-world incidents in our cybersecurity evaluations</a> (30 Jul 2026) and <a
                   href="https://www.anthropic.com/research/alignment-assessment-cybersecurity-incidents">An alignment
-                  assessment of recent cybersecurity incidents</a> (9 Sep 2026)</li>
+                  assessment of recent cybersecurity incidents</a> (9 Sep 2026), and <a
+                  href="https://www.anthropic.com/research/investigating-unintended-model-actions">Investigating
+                  unintended model actions in our evaluations and internal use</a> (9 Oct 2026)</li>
               <li>Meta, <a
                   href="https://research.meta.ai/blog/addressing-third-party-testing-misconfiguration-muse-spark-1-1">Addressing
                   an issue involving a third-party cyber evaluation of Muse Spark 1.1</a> (14 Aug 2026)</li>
@@ -1197,6 +1307,47 @@
       </div>
 
       <div class="history" id="changelog" style="margin-top: 40px;">
+        <div class="history__entry">
+          <div class="history__date">19 Oct 2026</div>
+          <div>
+            <div class="history__what">Weekly update (routine)</div>
+            <p class="history__why">Facts: added a second adjacent case, the Tencent-linked agent fleet that
+              Swarmchasers reported on 14 October, in which agents asked a researcher-run service presented as an AI
+              model for their task's data, with no sign of the agents talking to each other (section 02, scored in 05,
+              with the counts and a note in 06). Added OpenAI's GPT-6 Astra system card evaluations of agents seeking
+              and engaging with other agents to 04 and 06, and Anthropic's 9 October report to &ldquo;Other
+              labs.&rdquo; Added Zenity Labs' 9 September findings of about 1,000 more
+              agent-written entries to the DseWiki entry. Added Swarmchasers to the independent sources in the Caveat. Updated the RubyGems status
+              date and the sources list. The 12 October update, which was committed but not published that week, is
+              published with this one.</p>
+            <p class="history__why">Analysis: the closing question in &ldquo;Other labs&rdquo; read &ldquo;Whether
+              agents finding each other depends on the model, on running many agents at once, or on how hard anyone
+              has looked is the question I most want answered.&rdquo; It now says the Astra card's numbers suggest the
+              model matters, at least across one lab's models, though they come from a test built to draw agents out,
+              and asks whether agents finding each other in the wild also depends on running many agents at once or
+              on how hard anyone has looked. Changed because OpenAI's evaluation gives direct evidence on the first
+              part of the question. The sentences the routine re-tests each week were checked against this week's
+              sources and still hold. The Astra card's finding that 43% of sampled GPT-5.6 Sol runs speculated about
+              other agents and making contact is consistent with &ldquo;some went looking for one on purpose,&rdquo;
+              though speculating is not searching. The Tencent fleet's many routes fit &ldquo;in nearly every case
+              the agents tried several routes.&rdquo; The card's findings that Astra can sometimes evade OpenAI's monitors in adversarial tests, where OpenAI
+              pushes it to, were weighed against &ldquo;only rarely&rdquo; motivated to evade detection and do not move it,
+              because they measure capability under instruction, not what agents did in these incidents.</p>
+          </div>
+        </div>
+        <div class="history__entry">
+          <div class="history__date">12 Oct 2026</div>
+          <div>
+            <div class="history__what">Weekly update (routine)</div>
+            <p class="history__why">Facts: added Transluce's 30 September report on government websites to the
+              DseWiki entry, including the two lookups it matches to the wiki. Added Google DeepMind's 3 September
+              study of a 100-agent swarm, in which a grader exploit spread through sanctioned channels, to
+              &ldquo;Other labs&rdquo; in section 06, with a note that it is not a case for this page. Updated the
+              RubyGems status date and the sources list.</p>
+            <p class="history__why">No analysis changes. The sentences the routine re-tests each week were checked
+              against this week's sources, including three new OpenAI reports on single models, and still hold.</p>
+          </div>
+        </div>
         <div class="history__entry">
           <div class="history__date">5 Oct 2026</div>
           <div>
