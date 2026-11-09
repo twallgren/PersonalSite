@@ -34,7 +34,7 @@
     "headline": "Running a 235B model across three MacBooks",
     "description": "How three second-hand 64GB M1 Max MacBook Pros were cabled into a Thunderbolt ring to pool 192GB of unified memory and run models that fit on none of them, what had to be patched in MLX to get there, and the partition bug that silently dropped a transformer layer for months.",
     "url": "https://taylorwallgren.com/distributed-ai-cluster.html",
-    "dateModified": "2026-09-14",
+    "dateModified": "2026-11-07",
     "author": {
       "@type": "Person",
       "name": "Taylor Wallgren",
@@ -79,7 +79,7 @@
         <div class="post-kicker__bar"><i></i><i></i><i></i></div>
         <div class="post-kicker__status">Complete &middot; Running</div>
         <div class="post-kicker__sep"></div>
-        <div class="post-kicker__meta">Last updated <time datetime="2026-09-14">14 Sep 2026</time></div>
+        <div class="post-kicker__meta">Last updated <time datetime="2026-11-07">7 Nov 2026</time></div>
         <div class="post-kicker__sep"></div>
         <div class="post-kicker__meta">30 min read &middot; skimmable</div>
       </div>
@@ -229,7 +229,7 @@
         </a>
         <a class="rules__row" href="#after-reboot">
           <span class="rules__cat">After every reboot</span>
-          <span class="rules__text">Re-detect the Thunderbolt interfaces. Never reapply saved notes.</span>
+          <span class="rules__text">Let each node re-detect its peers. Never reapply saved notes.</span>
         </a>
         <a class="rules__row" href="#serving-defaults">
           <span class="rules__cat">Serving defaults</span>
@@ -1264,6 +1264,12 @@
               because FileVault's pre-boot prompt happens before the OS can read the auto-login preference. So an
               unattended reboot either leaves the machine encrypted-and-stuck or unencrypted-and-recoverable. Pick
               deliberately.</p>
+            <p class="guide__body">Auto-login does not make a node fully unattended. A macOS update can stop on a
+              screen that needs a person, and a menu-bar VPN such as Tailscale only starts after login &mdash; after
+              one drained battery it came back switched off altogether. Keep a second way in: a node that is up but
+              off Tailscale is still reachable over the Thunderbolt cable from its neighbour. And after recabling,
+              macOS asks on every Mac whether to allow the accessory to connect. Until someone clicks Allow, that
+              link stays down, with no error anywhere else.</p>
           </div>
         </div>
 
@@ -1321,13 +1327,23 @@
         <div class="guide__item" id="after-reboot">
           <div class="guide__cat">After every reboot</div>
           <div>
-            <div class="guide__rule">Re-detect the Thunderbolt interfaces. Never reapply saved notes.</div>
+            <div class="guide__rule">Let each node re-detect its peers. Never reapply saved notes.</div>
             <p class="guide__body">A reboot wipes the runtime network configuration <em>and</em> macOS renumbers the
               interfaces &mdash; what was <span class="tok">en2</span> becomes <span class="tok">en3</span>, and the
               addresses move with it. Reapplying a previously-recorded mapping puts a rank's address on the wrong
               physical interface, which is a uniquely nasty failure: the cluster initialises fine and all collective
               operations pass, so it looks healthy. Only point-to-point send and receive hangs. That is exactly what
               pipeline parallelism uses.</p>
+            <p class="guide__body">The fix that held is to make the nodes do the re-detecting. A small root
+              LaunchDaemon on each Mac checks every thirty seconds which Mac is on the other end of each Thunderbolt
+              cable, and puts that link's address on that port, wherever the cable happens to be plugged in. It
+              identifies the peer by the port's MAC address, learned over IPv6 link-local before any ring address
+              exists. The two obvious identifiers both fail: interface names, for the reason above, and Thunderbolt
+              Domain UUIDs, which look like hardware IDs but are regenerated at every boot. The conventional answer,
+              a permanent network service per port, is not available either &mdash; macOS 27 refuses to create one
+              for these interfaces. With the daemon, a rebooted node rejoins the ring about forty seconds after it
+              starts, with nothing run by hand. A peer it does not recognise gets no address at all: a loud failure
+              in place of the quiet one.</p>
           </div>
         </div>
 
